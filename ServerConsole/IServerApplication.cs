@@ -22,6 +22,7 @@ internal static class HttpContentTypeExtensions
     public static string ToStringType(this HttpContentType contentType) => contentType switch
     {
         HttpContentType.Html => "text/html",
+        HttpContentType.Text => "text/plain",
         _ => throw HttpException.InternalServerError("Content type not found!")
     };
 }
@@ -62,8 +63,10 @@ internal sealed class TestingResponse : IResponse
                 </head>
             </html>
             """;
+
         body.Write(Encoding.UTF8.GetBytes(content));
         await body.FlushAsync();
+        body.Position = 0;
     }
 }
 
