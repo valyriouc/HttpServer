@@ -1,8 +1,11 @@
 ﻿using HttpServer.ServerConsole.Logging;
 
+using ServerConsole;
+
 using System.Net;
-using System.Net.Http;
 using System.Net.Sockets;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace HttpServer.ServerConsole;
 
@@ -31,11 +34,15 @@ internal class HttpServer<TApp> : IDisposable
 
     private int requestCounter;
 
-    public HttpServer(ILogger serverLogger)
+    private readonly TApp application;
+
+    public HttpServer(TApp app, ILogger serverLogger)
     {
         requestCounter = 0;
 
         logger = serverLogger;
+        application = app;
+
         listener = new Socket(SocketType.Stream, ProtocolType.Tcp);
     }
 
@@ -77,15 +84,22 @@ internal class HttpServer<TApp> : IDisposable
 
     private async Task HandleRequestAsync(Socket client, CancellationToken token)
     { 
-        NetworkStream outStream = new NetworkStream(client);
-
-        MemoryStream clientToServer = await outStream.PackIntoAsync(token);
-
         try
         {
-            using MemoryStream serverToClient = ProcessRequest(clientToServer);
-            using NetworkStream stream = await serverToClient.PackIntoAsync(client, token);
+            NetworkStream inStream = new NetworkStream(client);
 
+            Memory<byte> input = await inStream.PackIntoAsync(token);
+            
+            logger.Info("Handling request");
+            Memory<byte> response = await ProcessRequest(input);
+
+            if (response.IsEmpty)
+            {
+                return;
+            }
+
+            NetworkStream stream = new NetworkStream(client, true);
+            await stream.WriteAsync(response);
             stream.Flush();
         }
         catch (Exception ex)
@@ -98,9 +112,54 @@ internal class HttpServer<TApp> : IDisposable
         }
     }
     
-    private MemoryStream ProcessRequest(MemoryStream stream)
+    private async Task<Memory<byte>> ProcessRequest(ReadOnlyMemory<byte> data)
     {
-        
+        HttpParser parser = new HttpParser(data, this.logger);
+
+        try
+        {
+            HttpRequest? request = parser.Parse();
+
+            if (request is null)
+            {
+                return Memory<byte>.Empty;
+            }
+
+            IEndpoint endpoint = application.Create(request);
+
+            IResponse content = await endpoint.ExecuteAsync(request);
+
+            HttpResponse response = new HttpResponse();
+            
+            await content.WriteToBodyAsync(response.Body);
+
+            Memory<byte> r = await response.WriteHttpAsync(content.ContentType);
+
+            Console.WriteLine(Encoding.UTF8.GetString(r.ToArray()));
+            response.Dispose();
+            return r;
+        }
+        catch (HttpParserException ex)
+        {
+            logger.Error(ex);
+            throw HttpException.InternalServerError("Error when reading the http data!");
+        }
+        catch(HttpException ex)
+        {
+            logger.Error(ex);
+            HttpResponse response = HttpResponse.FromHttpException(ex);
+            Memory<byte> r = await response.WriteHttpAsync(HttpContentType.Text);
+            response.Dispose();
+            return r;
+        }
+        catch(Exception ex)
+        {
+            logger.Error(ex);
+            HttpResponse response = HttpResponse.FromUnexpectedException(ex); 
+            Memory<byte> r = await response.WriteHttpAsync(HttpContentType.Text);
+            response.Dispose();
+            return r;
+        }
     }
 
     public void Dispose()
@@ -112,12 +171,11 @@ internal class HttpServer<TApp> : IDisposable
 
 internal static class StreamExtensions
 {
-    public static async Task<MemoryStream> PackIntoAsync(
+    public static async Task<Memory<byte>> PackIntoAsync(
         this NetworkStream stream, 
         CancellationToken token)
     {
-        MemoryStream os = new MemoryStream();
-        Memory<byte> buffer = new Memory<byte>();
+        List<byte> bytes = new List<byte>();
 
         while (true)
         {
@@ -126,23 +184,11 @@ internal static class StreamExtensions
                 break;
             }
 
+            byte[] buffer = new byte[256];
             int _ = await stream.ReadAsync(buffer, token);
-            os.Write(buffer.Span);
+            bytes.AddRange(buffer);
         }
 
-        return os;
-    }
-
-    public static async Task<NetworkStream> PackIntoAsync(
-        this MemoryStream stream, 
-        Socket socket, 
-        CancellationToken token)
-    {
-        Memory<byte> buffer = new();
-        await stream.ReadAsync(buffer, token);
-
-        NetworkStream os = new NetworkStream(socket, true);
-        await os.WriteAsync(buffer, token);
-        return os;
+        return bytes.ToArray();
     }
 }
