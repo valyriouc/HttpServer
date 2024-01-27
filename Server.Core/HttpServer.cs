@@ -1,15 +1,15 @@
-﻿using HttpServer.ServerConsole.Logging;
-
-using ServerConsole;
+﻿using Server.Core.Application;
+using Server.Core.Application.Core;
+using Server.Core.Http;
+using Server.Core.Logging;
 
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace HttpServer.ServerConsole;
+namespace Server.Core;
 
-internal readonly struct HttpServerConfig
+public readonly struct HttpServerConfig
 {
     public IPAddress Address { get; }
 
@@ -26,8 +26,8 @@ internal readonly struct HttpServerConfig
    
 }
 
-internal class HttpServer<TApp> : IDisposable
-    where TApp : IServerApplication
+public class HttpServer<TApp> : IDisposable
+    where TApp : IApplication
 {
     private readonly Socket listener;
     private readonly ILogger logger;

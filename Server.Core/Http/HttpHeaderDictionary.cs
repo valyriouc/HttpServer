@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Server.Core.Http;
 
-namespace ServerConsole;
-
-internal class HttpHeaderDictionary : Dictionary<string, string>
+public class HttpHeaderDictionary : Dictionary<string, string>
 {
     public HttpHeaderDictionary()
     {

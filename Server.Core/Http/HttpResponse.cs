@@ -1,11 +1,12 @@
-﻿using HttpServer.ServerConsole;
+﻿using Server.Core.Application;
+using Server.Core.Extensions;
 
 using System.Net;
 using System.Text;
 
-namespace ServerConsole;
+namespace Server.Core.Http;
 
-internal class HttpResponse : IDisposable
+public class HttpResponse : IDisposable
 { 
     public HttpStatusCode StatusCode { get; set; }
 
@@ -45,7 +46,6 @@ internal class HttpResponse : IDisposable
         Headers.Add("content-type", type.ToStringType());
         Headers.Add("content-length", Body.Length.ToString());
 
-        // Writing the headers 
         IEnumerable<byte> headers = Headers.ConvertTo();
         bytes.AddRange(headers);
         
@@ -98,69 +98,4 @@ internal static class HttpHeaderDictionaryExtensions
             }
         }
     }
-}
-
-internal static class ListExtensions
-{
-    public static List<byte> ChainableSpaceWriting(this List<byte> list)
-    {
-        list.Add((byte)0x20);
-        return list;
-    }
-
-    public static List<byte> ChainableNewLineWriting(this List<byte> list)
-    {
-        list.Add((byte)0x0a);
-        return list;
-    }
-
-    public static List<byte> ChainableAdd(this List<byte> list, byte item)
-    {
-        list.Add(item);
-        return list;
-    }
-
-    public static List<byte> ChainableAdd(this List<byte> list, byte[] items)
-    {
-        foreach (byte item in items)
-        {
-            list.ChainableAdd(item);
-        }
-
-        return list;
-    }
-}
-
-internal static class VersionExtensions
-{
-    public static byte[] GetHttpVersionBytes(this Version version)
-    {
-        if (version.Minor == 1 && version.Major == 1)
-        {
-            return Encoding.UTF8.GetBytes("HTTP/1.1");
-        }
-        else
-        {
-            return Encoding.UTF8.GetBytes($"HTTP/{version.Major}");
-        }
-    }
-}
-
-internal static class HttpStatusCodeExtensions
-{
-    public static byte[] GetBytes(this HttpStatusCode statusCode)
-    {
-        return Encoding.UTF8.GetBytes(((int)statusCode).ToString());
-    }
-
-    public static byte[] GetNameBytes(this HttpStatusCode statusCode) => statusCode switch
-    {
-        HttpStatusCode.OK => Encoding.UTF8.GetBytes("OK, here we are!"),
-        HttpStatusCode.BadRequest => Encoding.UTF8.GetBytes("This is very bad!"),
-        HttpStatusCode.NotFound => Encoding.UTF8.GetBytes("We couldn't find it!"),
-        HttpStatusCode.MethodNotAllowed => Encoding.UTF8.GetBytes("What are you trying to do!"),
-        HttpStatusCode.Forbidden => Encoding.UTF8.GetBytes("Do you really thought so!"),
-        HttpStatusCode.InternalServerError => Encoding.UTF8.GetBytes("Complete system failure!"),
-        _ => Encoding.UTF8.GetBytes(statusCode.ToString()),
-    };
 }

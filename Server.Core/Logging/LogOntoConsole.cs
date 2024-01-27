@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Server.Core.Logging;
 
 namespace HttpServer.ServerConsole.Logging;
 
-internal class LogOntoConsole : ILogger
+public class LogOntoConsole : ILogger
 {
     private readonly bool colorize;
 

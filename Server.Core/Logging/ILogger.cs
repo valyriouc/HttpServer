@@ -1,19 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Server.Core.Logging;
 
-namespace HttpServer.ServerConsole.Logging;
-
-internal enum LogState
+public enum LogState
 {
     Info,
     Warn, 
     Error
 }
 
-internal static class LogStateExtensions
+public static class LogStateExtensions
 {
     public static string WriteAs(this LogState state) => state switch
     {
@@ -24,7 +18,7 @@ internal static class LogStateExtensions
     };
 }
 
-internal interface ILogger
+public interface ILogger
 {
     public void Info(string message);
 

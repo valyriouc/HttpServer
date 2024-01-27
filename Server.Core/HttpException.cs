@@ -1,8 +1,8 @@
 ﻿using System.Net;
 
-namespace ServerConsole;
+namespace Server.Core;
 
-internal sealed class HttpException : Exception
+public sealed class HttpException : Exception
 {
     public HttpStatusCode StatusCode { get; }
 
