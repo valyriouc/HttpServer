@@ -1,6 +1,5 @@
 ﻿using HttpServer.ServerConsole;
 
-using System.Collections.Generic;
 using System.Net;
 using System.Text;
 
@@ -55,10 +54,12 @@ internal class HttpResponse : IDisposable
             Body.Position = 0;
             bytes.Add(0x0a);
 
-            Memory<byte> bodyBytes = new();
+            Memory<byte> bodyBytes = new byte[Body.Length];
             await Body.ReadAsync(bodyBytes);
             bytes.AddRange(bodyBytes.ToArray());
         }
+
+        await Body.DisposeAsync();
 
         return bytes.ToArray();
     }
