@@ -1,11 +1,7 @@
-﻿using Server.Core.Application;
-using Server.Core.Application.Core;
-using Server.Core.Http;
-using Server.Core.Logging;
+﻿using Server.Core.Logging;
 
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 
 namespace Server.Core;
 
@@ -133,7 +129,7 @@ internal class HttpServer<THandler> : IDisposable
     }
 }
 
-internal static class StreamExtensions
+file static class StreamExtensions
 {
     public static async Task<Memory<byte>> PackIntoAsync(
         this NetworkStream stream, 
