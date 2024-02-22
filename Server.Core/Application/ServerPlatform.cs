@@ -1,10 +1,46 @@
-﻿using Server.Core.Logging;
+﻿using Server.Core.Application.Core;
+using Server.Core.Http;
+using Server.Core.Logging;
 
 namespace Server.Core.Application;
 
 public interface IBuilder<TResult> 
 {
     public TResult Build();
+}
+
+public delegate HttpResponse Middleware(HttpRequest request, Middleware next);
+
+public struct HttpProtocolConfigurations
+{
+    public HashSet<string> Methods { get; }
+
+    public HashSet<double> Versions { get; }
+
+    public HttpProtocolConfigurations()
+    {
+        Methods = new HashSet<string>();
+        Versions = new HashSet<double>();
+    }
+
+}
+
+public class HttpProtocolPlatform : IProtocolPlatform
+{
+    public Dictionary<string, IApplication> Applications { get; } 
+    
+    public HashSet<Middleware> RequestPipeline { get; }
+
+    public HttpProtocolPlatform()
+    {
+        Applications = new Dictionary<string, IApplication>();
+        RequestPipeline = new HashSet<Middleware>();
+    }
+
+    public Task<Memory<byte>> HandleOperationAsync(Memory<byte> request)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 public interface IProtocolPlatformBuilder<TPlatform> : IBuilder<TPlatform>
