@@ -1,7 +1,88 @@
-﻿using Server.Core.Application.Core;
-using Server.Core.Logging;
+﻿using Server.Core.Logging;
 
 namespace Server.Core.Application;
+
+public interface IBuilder<TResult> 
+{
+    public TResult Build();
+}
+
+public interface IProtocolPlatformBuilder<TPlatform> : IBuilder<TPlatform>
+{
+
+}
+
+public class ServerPlatformBuilder<THandler> : IBuilder<IServerPlatform>
+    where THandler : IProtocolPlatform
+{
+    private ILogger? logger;
+    private string? ipAddress;
+    private ushort port;
+
+    private IProtocolPlatformBuilder<THandler>? protocolBuilder;
+
+    public ServerPlatformBuilder()
+    {
+
+    }
+
+    public ServerPlatformBuilder<THandler> ConfigureProtocol(Func<IProtocolPlatformBuilder<THandler>> configure)
+    {
+        this.protocolBuilder = configure();
+        return this;
+    }
+
+    public ServerPlatformBuilder<THandler> WithLogger(ILogger logger)
+    {
+        this.logger = logger;
+        return this;
+    }
+
+    public ServerPlatformBuilder<THandler> WithIpAddress(string ipAddress)
+    {
+        if (string.IsNullOrWhiteSpace(ipAddress))
+        {
+            throw new ArgumentException(nameof(ipAddress)); 
+        }
+
+        this.ipAddress = ipAddress;
+
+        return this;
+    }
+
+    public ServerPlatformBuilder<THandler> WithPort(ushort port)
+    {
+        if (string.IsNullOrWhiteSpace(ipAddress))
+        {
+            throw new ArgumentException(nameof(ipAddress));
+        }
+
+       this.port = port;    
+
+        return this;
+    }
+
+    public IServerPlatform Build()
+    {
+        if (string.IsNullOrWhiteSpace(ipAddress))
+        {
+            throw new ArgumentException(nameof(ipAddress));
+        }
+
+        if (protocolBuilder is null)
+        {
+            throw new ArgumentException(nameof(protocolBuilder));
+        }
+
+        if (logger is null)
+        {
+            // TODO: We can make the logger optional!
+            throw new ArgumentException(nameof(logger));
+        }
+
+        return new ServerPlatform<THandler>(protocolBuilder!.Build(), new(ipAddress, port), logger);
+    }
+}
 
 public interface IServerPlatform
 {

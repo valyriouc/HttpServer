@@ -6,9 +6,9 @@ internal readonly struct ServerConfig
 {
     public IPAddress Address { get; }
 
-    public int Port { get; }
+    public ushort Port { get; }
 
-    public ServerConfig(string ipAddress, int port)
+    public ServerConfig(string ipAddress, ushort port)
     {
         Address = IPAddress.Parse(ipAddress);
         Port = port;
