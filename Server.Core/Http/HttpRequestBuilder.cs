@@ -8,7 +8,7 @@ internal class HttpRequestBuilder
 
     public Dictionary<string, string> headers;
 
-    public Stream? body;
+    public MemoryStream? body;
 
     public HttpRequestBuilder()
     {
@@ -69,4 +69,3 @@ internal class HttpRequestBuilder
             this.body);
     }
 }
-

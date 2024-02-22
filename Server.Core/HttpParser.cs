@@ -19,10 +19,11 @@ internal class HttpParser
         Finished = 5
     }
 
+    protected readonly ReadOnlyMemory<byte> data;
+                
     private readonly ILogger logger;
     private readonly HttpRequestBuilder builder;
 
-    private readonly ReadOnlyMemory<byte> data;
     private int ptr;
     private ParsingState state;
 
@@ -51,11 +52,17 @@ internal class HttpParser
         ParseMethod();
         ParseUrl();
         ParseVersion();
-        
-        while(this.state == ParsingState.Headers)
+        EnsureNewLine();
+
+        if (this.state != ParsingState.Version)
+        {
+            throw new HttpParserException("Invalid parser state!");
+        }
+
+        do
         {
             ParseHeader();
-        }
+        } while (this.state == ParsingState.Headers);
 
         if (this.state == ParsingState.Body)
         {
@@ -67,8 +74,6 @@ internal class HttpParser
 
     private void EnsureSpace()
     {
-        Console.WriteLine((char)this.data.Span[ptr]);
-
         if (this.data.Span[ptr] != 0x20)
         {
             throw new HttpParserException("Expected a space!");
@@ -79,7 +84,26 @@ internal class HttpParser
         }
     }
 
-    private void ParseMethod()
+    private void EnsureNewLine()
+    {
+        if (this.data.Span[ptr] == (byte)'\r' && 
+            this.data.Span[ptr+1] == (byte)'\n')
+        {
+            ptr += 2;
+            return;
+        }
+
+        if (this.data.Span[ptr] == (byte)'\n' || 
+            this.data.Span[ptr] == (byte)'\r')
+        {
+            ptr += 1;
+            return;
+        }
+
+        throw new HttpParserException("Expected a new line!");
+    }
+
+    protected internal void ParseMethod()
     {
         switch(this.data.Span[0])
         {
@@ -112,7 +136,7 @@ internal class HttpParser
         this.state = ParsingState.Method;
     }
     
-    private void ParseUrl()
+    protected internal void ParseUrl()
     {
         if (this.state != ParsingState.Method)
         {
@@ -123,7 +147,7 @@ internal class HttpParser
 
         logger.Warn(ptr.ToString());
 
-        ReadOnlySpan<byte> slice = this.data.Slice(ptr).Span;
+        ReadOnlySpan<byte> slice = this.data.Span.Slice(ptr);
 
         int index = slice.IndexOf((byte)0x20);
 
@@ -134,7 +158,7 @@ internal class HttpParser
         this.state = ParsingState.Url;
     }
 
-    private void ParseVersion()
+    protected internal void ParseVersion()
     {
         if (this.state != ParsingState.Url)
         {
@@ -143,25 +167,23 @@ internal class HttpParser
 
         EnsureSpace();
 
-        ReadOnlySpan<byte> slice = this.data.Slice(ptr).Span;
+        ReadOnlySpan<byte> slice = this.data.Span.Slice(ptr);
 
-        int index = slice.IndexOf((byte)0x0a) + 1;
+        int index = slice.IndexOf((byte)'\r') + 1;
 
         ReadOnlySpan<byte> line = slice[0..index];
 
-        foreach (byte b in line)
+        if ((line.Length != 7 || 
+            line.Length != 9) && 
+            line[line.Length - 1] != (byte)'\r')
         {
-            Console.Write((char)b);
-        }
-
-        if ((line.Length != 8 || line.Length != 10) && line[line.Length - 1] != 0x0a)
-        {
-            throw HttpException.InternalServerError("Malformed head line");
+            throw HttpException.InternalServerError(
+                "Malformed head line");
         }
 
         this.state = ParsingState.Version;
 
-        if (line.Length == 8)
+        if (line.Length == 7)
         {
             if (line[5] == 0x31)
             {
@@ -177,29 +199,25 @@ internal class HttpParser
                 builder.WithVersion(HttpVersion.Version30);
             }
 
-            ptr += line.Length;
+            ptr += line.Length - 1;
             return;
         }
 
-        if (line.Length == 10)
+        if (line.Length == 9)
         {
             builder.WithVersion(HttpVersion.Version11);
-            ptr += line.Length;
+            ptr += line.Length - 1;
             return;
         }
 
         throw HttpException.InternalServerError("Error when parsing the http version!");
-
     }
 
-    private void ParseHeader()
+    protected internal void ParseHeader()
     {
-        if (this.state != ParsingState.Version)
-        {
-            throw new HttpParserException("Invalid parser state!");
-        }
+        this.state = ParsingState.Headers;
 
-        ReadOnlySpan<byte> slice = this.data.Slice(ptr).Span;
+        ReadOnlySpan<byte> slice = this.data.Span.Slice(ptr);
 
         if (slice.IsEmpty)
         {
@@ -207,29 +225,33 @@ internal class HttpParser
             return;
         }
 
-        if (slice[0] == 0x0a)
+        if (slice[0] == (byte)'\r' && slice[1] == (byte)'\n')
         {
             this.state = ParsingState.Body;
             return;
         }
 
-        int nameLength = slice.IndexOf((byte)0x3a) - 1;
+        int nameLength = slice.IndexOf((byte)0x3a);
         string name = Encoding.UTF8.GetString(slice[0..nameLength]);
         ptr += nameLength + 1;
 
-        //EnsureWhiteSpace(slice);
-        ptr += 1;
+        EnsureSpace();
 
-        int valueLength = slice.IndexOf((byte)0x0a) - 1;
-        string value = Encoding.UTF8.GetString(slice[ptr..valueLength]);
-        ptr += valueLength + 1;
+        slice = this.data.Span.Slice(ptr);
 
-        builder.WithHeader(name, value);
+        int valueLength = slice.IndexOf((byte)'\r') + 1;
+        string value = Encoding.UTF8.GetString(slice[0..valueLength]);
+        ptr += valueLength - 1;
+
+        EnsureNewLine();
+
+        builder.WithHeader(name.Trim(), value.Trim());
     }
 
-    private void ReadBody()
+    protected void ReadBody()
     {
-
+        ReadOnlySpan<byte> slice = this.data.Span.Slice(ptr);
+        int firstNull = slice.IndexOf((byte)0x00);
+        builder.WithBody(slice[..firstNull]);
     }
-
 }

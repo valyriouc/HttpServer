@@ -50,6 +50,8 @@ public class HttpServer<TApp> : IDisposable
         HttpServerConfig config, 
         CancellationToken token)
     {
+        List<Task> tasks = new List<Task>();
+
         try
         {
             listener.Bind(config.CreateEndpoint());
@@ -62,23 +64,27 @@ public class HttpServer<TApp> : IDisposable
                 Socket client = await listener.AcceptAsync(token);
                 requestCounter += 1;
 
-                await Task.Run(async () =>
+                Task t = Task.Run(async () =>
                 {
-                    Socket socket = new Socket(client.SafeHandle);
-                    await HandleRequestAsync(socket, token);
+                    using (client)
+                    {
+                        await HandleRequestAsync(client, token);
+                    }
                 });
 
-                client.Close();
-
                 logger.Info($"Request number {requestCounter} is now be in progress!");
-            }
 
-            return 0;
+                tasks.Add(t);
+            }
         }
         catch(Exception ex)
         {
             logger.Error(ex);
             return -1;
+        }
+        finally
+        {
+            await Task.WhenAll(tasks);
         }
     } 
 
@@ -86,9 +92,9 @@ public class HttpServer<TApp> : IDisposable
     { 
         try
         {
-            NetworkStream inStream = new NetworkStream(client);
+            NetworkStream stream = new NetworkStream(client);
 
-            Memory<byte> input = await inStream.PackIntoAsync(token);
+            Memory<byte> input = await stream.PackIntoAsync(token);
             
             logger.Info("Handling request");
             Memory<byte> response = await ProcessRequest(input);
@@ -98,8 +104,8 @@ public class HttpServer<TApp> : IDisposable
                 return;
             }
 
-            NetworkStream stream = new NetworkStream(client, true);
             await stream.WriteAsync(response);
+
             stream.Flush();
         }
         catch (Exception ex)

@@ -35,14 +35,14 @@ public class HttpRequest
 
     public HttpHeaderDictionary Headers { get; init; }
 
-    public Stream? Body { get; init; }
+    public MemoryStream? Body { get; init; }
 
     internal HttpRequest(
         HttpMethod method, 
         string url, 
         Version? version, 
         HttpHeaderDictionary headers, 
-        Stream? body) 
+        MemoryStream? body) 
     {
         this.Method = method;
         UrlParts = ParseUrl(url);

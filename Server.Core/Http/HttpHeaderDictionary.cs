@@ -4,7 +4,6 @@ public class HttpHeaderDictionary : Dictionary<string, string>
 {
     public HttpHeaderDictionary()
     {
-
     }
 
     public HttpHeaderDictionary(Dictionary<string, string> headers)
