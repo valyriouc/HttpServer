@@ -13,19 +13,20 @@ public interface IServerPlatform
 }
 
 internal class ServerPlatform<THandler> : IServerPlatform
-    where THandler : IProtocolHandler
+    where THandler : IProtocolPlatform
 {
     private readonly ILogger logger;
-    private readonly HttpServerConfig serverConfig;
+    private readonly ServerConfig serverConfig;
 
     private HttpServer<THandler> Server { get; init; }
 
     internal ServerPlatform(
         THandler handler,
-        HttpServerConfig serverConfig,
+        ServerConfig serverConfig,
         ILogger logger)
     {
         Server = new HttpServer<THandler>(handler, logger);
+
         this.serverConfig = serverConfig;
         this.logger = logger;
     }
