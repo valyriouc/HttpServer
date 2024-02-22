@@ -4,7 +4,7 @@ using System.Net.Sockets;
 namespace Server.Core;
 
 internal class HttpServer<THandler> : IDisposable
-    where THandler : IProtocolHandler
+    where THandler : IProtocolPlatform
 {
     private readonly Socket listener;
     private readonly ILogger logger;
@@ -24,7 +24,7 @@ internal class HttpServer<THandler> : IDisposable
     }
 
     public async Task<int> RunAsync(
-        HttpServerConfig config, 
+        ServerConfig config, 
         CancellationToken token)
     {
         List<Task> tasks = new List<Task>();
