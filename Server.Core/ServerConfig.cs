@@ -2,13 +2,13 @@
 
 namespace Server.Core;
 
-internal readonly struct HttpServerConfig
+internal readonly struct ServerConfig
 {
     public IPAddress Address { get; }
 
     public int Port { get; }
 
-    public HttpServerConfig(string ipAddress, int port)
+    public ServerConfig(string ipAddress, int port)
     {
         Address = IPAddress.Parse(ipAddress);
         Port = port;
