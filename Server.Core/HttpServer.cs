@@ -1,35 +1,10 @@
 ﻿using Server.Core.Logging;
-
-using System.Net;
 using System.Net.Sockets;
 
 namespace Server.Core;
 
-public readonly struct HttpServerConfig
-{
-    public IPAddress Address { get; }
-
-    public int Port { get; }
-
-    public HttpServerConfig(string ipAddress, int port)
-    {
-        Address = IPAddress.Parse(ipAddress);
-        Port = port;
-    }
-
-    public IPEndPoint CreateEndpoint() => 
-        new IPEndPoint(Address, Port);
-   
-}
-
-public interface IProtocolHandable
-{
-    public Task<Memory<byte>> HandleOperationAsync(Memory<byte> request);    
-
-}
-
 internal class HttpServer<THandler> : IDisposable
-    where THandler : IProtocolHandable
+    where THandler : IProtocolHandler
 {
     private readonly Socket listener;
     private readonly ILogger logger;
