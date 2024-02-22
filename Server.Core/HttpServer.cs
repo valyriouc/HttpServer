@@ -26,22 +26,28 @@ public readonly struct HttpServerConfig
    
 }
 
-public class HttpServer<TApp> : IDisposable
-    where TApp : IApplication
+public interface IProtocolHandable
+{
+    public Task<Memory<byte>> HandleOperationAsync(Memory<byte> request);    
+
+}
+
+internal class HttpServer<THandler> : IDisposable
+    where THandler : IProtocolHandable
 {
     private readonly Socket listener;
     private readonly ILogger logger;
 
     private int requestCounter;
 
-    private readonly TApp application;
+    private readonly THandler handler;
 
-    public HttpServer(TApp app, ILogger serverLogger)
+    internal HttpServer(THandler app, ILogger serverLogger)
     {
         requestCounter = 0;
 
         logger = serverLogger;
-        application = app;
+        handler = app;
 
         listener = new Socket(SocketType.Stream, ProtocolType.Tcp);
     }
@@ -94,13 +100,15 @@ public class HttpServer<TApp> : IDisposable
         {
             NetworkStream stream = new NetworkStream(client);
 
-            Memory<byte> input = await stream.PackIntoAsync(token);
+            Memory<byte> request = await stream.PackIntoAsync(token);
             
-            logger.Info("Handling request");
-            Memory<byte> response = await ProcessRequest(input);
+            logger.Info("Handling request...");
+            Memory<byte> response = await handler.HandleOperationAsync(request);
+            logger.Info("Handled request successfully!");
 
             if (response.IsEmpty)
             {
+                logger.Warn("Response was empty!");
                 return;
             }
 
@@ -115,56 +123,6 @@ public class HttpServer<TApp> : IDisposable
         finally
         {
             client.Close();
-        }
-    }
-    
-    private async Task<Memory<byte>> ProcessRequest(ReadOnlyMemory<byte> data)
-    {
-        HttpParser parser = new HttpParser(data, this.logger);
-
-        try
-        {
-            HttpRequest? request = parser.Parse();
-
-            if (request is null)
-            {
-                return Memory<byte>.Empty;
-            }
-
-            IEndpoint endpoint = application.Create(request);
-
-            IResponse content = await endpoint.ExecuteAsync(request);
-
-            HttpResponse response = new HttpResponse();
-            
-            await content.WriteToBodyAsync(response.Body);
-
-            Memory<byte> r = await response.WriteHttpAsync(content.ContentType);
-
-            Console.WriteLine(Encoding.UTF8.GetString(r.ToArray()));
-            response.Dispose();
-            return r;
-        }
-        catch (HttpParserException ex)
-        {
-            logger.Error(ex);
-            throw HttpException.InternalServerError("Error when reading the http data!");
-        }
-        catch(HttpException ex)
-        {
-            logger.Error(ex);
-            HttpResponse response = HttpResponse.FromHttpException(ex);
-            Memory<byte> r = await response.WriteHttpAsync(HttpContentType.Text);
-            response.Dispose();
-            return r;
-        }
-        catch(Exception ex)
-        {
-            logger.Error(ex);
-            HttpResponse response = HttpResponse.FromUnexpectedException(ex); 
-            Memory<byte> r = await response.WriteHttpAsync(HttpContentType.Text);
-            response.Dispose();
-            return r;
         }
     }
 

@@ -72,7 +72,11 @@ public class HttpRequest
             return parts;
 
         int skip = path.Length;
-        string? query = url.Skip(skip).Take(url.Length - skip).ToString();
+        string? query = url
+            .Skip(skip)
+            .Take(url.Length - skip)
+            .ToString();
+
         if (query is null)
         {
             throw new Exception("Could not parse query from url!");
