@@ -3,67 +3,43 @@ using Server.Core.Logging;
 
 namespace Server.Core.Application;
 
-public enum HttpPart
+public interface IServerPlatform
 {
-    Method=0,
-    Url = 1,
-    Version = 2,
-    Header = 3,
-    Body = 4
+    public Task StartAsync(CancellationToken cancellationToken);
+
+    public Task StopAsync(CancellationToken cancellationToken);
+
+    public Task RestartAsync(CancellationToken cancellationToken);
 }
 
-public interface IHttpParser
+internal class ServerPlatform<THandler> : IServerPlatform
+    where THandler : IProtocolHandler
 {
-    public IEnumerable<(HttpPart, byte[])> Parse(ReadOnlyMemory<byte> payload);
-}
+    private readonly ILogger logger;
+    private readonly HttpServerConfig serverConfig;
 
-public interface IRequestBuilder
-{
-
-}
-
-public interface IResponseBuilder
-{
-
-}
-
-internal class ServerPlatformBuilder
-{
-
-}
-
-internal class ServerPlatform<TApp, TParser, BRequest, BResponse>
-    where TApp : IApplication
-    where TParser : IHttpParser
-    where BRequest : IRequestBuilder
-    where BResponse : IResponseBuilder
-{
-    public TParser Parser { get; init; }
-
-    public BRequest RequestBuilder { get; init; }
-
-    public BResponse ResponseBuilder { get; init; }
-
-    public TApp Application { get; init; }
-
-    public ILogger Logger { get; init; }
+    private HttpServer<THandler> Server { get; init; }
 
     internal ServerPlatform(
-        TApp app, 
-        TParser parser, 
-        BRequest request, 
-        BResponse response, 
+        THandler handler,
+        HttpServerConfig serverConfig,
         ILogger logger)
     {
-        Application = app;
-        Parser = parser;
-        RequestBuilder = request;
-        ResponseBuilder = response;
-        Logger = logger;
+        Server = new HttpServer<THandler>(handler, logger);
+        this.serverConfig = serverConfig;
+        this.logger = logger;
     }
 
-    public async Task<Memory<byte>> HandleAsync(Memory<byte> payload)
+    public async Task StartAsync(CancellationToken cancellationToken) =>
+        await Server.RunAsync(this.serverConfig, cancellationToken);
+
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
-        return Memory<byte>.Empty;
+        throw new NotImplementedException();
+    }
+
+    public async Task RestartAsync(CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
     }
 }
