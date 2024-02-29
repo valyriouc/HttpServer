@@ -53,7 +53,7 @@ public class ServerPlatformBuilder<THandler> : IBuilder<IServerPlatform>
 {
     private ILogger? logger;
     private string? ipAddress;
-    private ushort port;
+    private ushort? port;
 
     private IProtocolPlatformBuilder<THandler>? protocolBuilder;
 
@@ -67,6 +67,7 @@ public class ServerPlatformBuilder<THandler> : IBuilder<IServerPlatform>
         this.protocolBuilder = configure();
         return this;
     }
+
 
     public ServerPlatformBuilder<THandler> WithLogger(ILogger logger)
     {
@@ -98,6 +99,14 @@ public class ServerPlatformBuilder<THandler> : IBuilder<IServerPlatform>
         return this;
     }
 
+    private void ThrowIfNull(object? nullable, string name)
+    {
+        if (nullable is null)
+        {
+            throw new ArgumentNullException(name);
+        }
+    }
+
     public IServerPlatform Build()
     {
         if (string.IsNullOrWhiteSpace(ipAddress))
@@ -105,10 +114,8 @@ public class ServerPlatformBuilder<THandler> : IBuilder<IServerPlatform>
             throw new ArgumentException(nameof(ipAddress));
         }
 
-        if (protocolBuilder is null)
-        {
-            throw new ArgumentException(nameof(protocolBuilder));
-        }
+        ThrowIfNull(this.port, nameof(port));
+        ThrowIfNull(this.protocolBuilder, nameof(protocolBuilder));
 
         if (logger is null)
         {
