@@ -4,13 +4,26 @@ using Server.Core.Logging;
 
 namespace Server.Core.Application;
 
+/// <summary>
+/// Abstract interface for a builder 
+/// </summary>
+/// <typeparam name="TResult"></typeparam>
 public interface IBuilder<TResult> 
 {
     public TResult Build();
 }
 
+/// <summary>
+/// Represents a middleware which transforms the http request on its way to the target endpoint 
+/// </summary>
+/// <param name="request"></param>
+/// <param name="next"></param>
+/// <returns></returns>
 public delegate HttpResponse Middleware(HttpRequest request, Middleware next);
 
+/// <summary>
+/// Configuration for the http protocol
+/// </summary>
 public struct HttpProtocolConfigurations
 {
     public HashSet<string> Methods { get; }
@@ -27,6 +40,9 @@ public struct HttpProtocolConfigurations
 
 }
 
+/// <summary>
+/// Class which represents a module which is capabable of handling http 
+/// </summary>
 public class HttpProtocolPlatform : IProtocolPlatform
 {
     public Dictionary<string, IApplication> Applications { get; } 
@@ -45,6 +61,10 @@ public class HttpProtocolPlatform : IProtocolPlatform
     }
 }
 
+/// <summary>
+/// Interface that builds a platform which can handle a specific (network) protocol
+/// </summary>
+/// <typeparam name="TPlatform"></typeparam>
 public interface IProtocolPlatformBuilder<TPlatform> : IBuilder<TPlatform>
 {
     public IProtocolPlatformBuilder<TPlatform> WithMethods(HashSet<string> methods);
@@ -54,6 +74,10 @@ public interface IProtocolPlatformBuilder<TPlatform> : IBuilder<TPlatform>
     public IProtocolPlatformBuilder<TPlatform> WithHeaders(Dictionary<string, string[]> headers);
 }
 
+/// <summary>
+/// Builder for a server platform
+/// </summary>
+/// <typeparam name="THandler"></typeparam>
 public class ServerPlatformBuilder<THandler> : IBuilder<IServerPlatform>
     where THandler : IProtocolPlatform
 {
@@ -133,6 +157,11 @@ public class ServerPlatformBuilder<THandler> : IBuilder<IServerPlatform>
     }
 }
 
+/// <summary>
+/// Inteface which represents a server platform module 
+/// Server platform encapsulate should encapsulate a tcp module 
+/// and a protocol handler 
+/// </summary>
 public interface IServerPlatform
 {
     public Task StartAsync(CancellationToken cancellationToken);
@@ -142,6 +171,10 @@ public interface IServerPlatform
     public Task RestartAsync(CancellationToken cancellationToken);
 }
 
+/// <summary>
+/// Implementation of a server platform 
+/// </summary>
+/// <typeparam name="THandler"></typeparam>
 internal class ServerPlatform<THandler> : IServerPlatform
     where THandler : IProtocolPlatform
 {
