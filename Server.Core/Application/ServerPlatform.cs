@@ -17,6 +17,8 @@ public struct HttpProtocolConfigurations
 
     public HashSet<Version> Versions { get; }
 
+    public Dictionary<string, string[]> AllowedHeaders { get; }
+
     public HttpProtocolConfigurations()
     {
         Methods = new HashSet<string>();
@@ -27,12 +29,9 @@ public struct HttpProtocolConfigurations
 
 public class HttpProtocolPlatform : IProtocolPlatform
 {
-
     public Dictionary<string, IApplication> Applications { get; } 
     
     public HashSet<Middleware> RequestPipeline { get; }
-
-    public Dictionary<string, string[]> AllowedHeaders { get; }
 
     public HttpProtocolPlatform()
     {
