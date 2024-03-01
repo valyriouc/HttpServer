@@ -1,17 +1,10 @@
 ﻿using Server.Core.Application.Core;
 using Server.Core.Http;
 using Server.Core.Logging;
+using Server.Core.Protocol;
+using Server.Generic;
 
 namespace Server.Core.Application;
-
-/// <summary>
-/// Abstract interface for a builder 
-/// </summary>
-/// <typeparam name="TResult"></typeparam>
-public interface IBuilder<TResult> 
-{
-    public TResult Build();
-}
 
 /// <summary>
 /// Represents a middleware which transforms the http request on its way to the target endpoint 
@@ -20,59 +13,6 @@ public interface IBuilder<TResult>
 /// <param name="next"></param>
 /// <returns></returns>
 public delegate HttpResponse Middleware(HttpRequest request, Middleware next);
-
-/// <summary>
-/// Configuration for the http protocol
-/// </summary>
-public struct HttpProtocolConfigurations
-{
-    public HashSet<string> Methods { get; }
-
-    public HashSet<Version> Versions { get; }
-
-    public Dictionary<string, string[]> AllowedHeaders { get; }
-
-    public HttpProtocolConfigurations()
-    {
-        Methods = new HashSet<string>();
-        Versions = new HashSet<Version>();
-    }
-
-}
-
-/// <summary>
-/// Class which represents a module which is capabable of handling http 
-/// </summary>
-public class HttpProtocolPlatform : IProtocolPlatform
-{
-    public Dictionary<string, IApplication> Applications { get; } 
-    
-    public HashSet<Middleware> RequestPipeline { get; }
-
-    public HttpProtocolPlatform()
-    {
-        Applications = new Dictionary<string, IApplication>();
-        RequestPipeline = new HashSet<Middleware>();
-    }
-
-    public Task<Memory<byte>> HandleOperationAsync(Memory<byte> request)
-    {
-        throw new NotImplementedException();
-    }
-}
-
-/// <summary>
-/// Interface that builds a platform which can handle a specific (network) protocol
-/// </summary>
-/// <typeparam name="TPlatform"></typeparam>
-public interface IProtocolPlatformBuilder<TPlatform> : IBuilder<TPlatform>
-{
-    public IProtocolPlatformBuilder<TPlatform> WithMethods(HashSet<string> methods);
-
-    public IProtocolPlatformBuilder<TPlatform> WithVersions(HashSet<Version> versions);
-
-    public IProtocolPlatformBuilder<TPlatform> WithHeaders(Dictionary<string, string[]> headers);
-}
 
 /// <summary>
 /// Builder for a server platform
@@ -153,22 +93,8 @@ public class ServerPlatformBuilder<THandler> : IBuilder<IServerPlatform>
             throw new ArgumentException(nameof(logger));
         }
 
-        return new ServerPlatform<THandler>(protocolBuilder!.Build(), new(ipAddress, port), logger);
+        return new ServerPlatform<THandler>(protocolBuilder!.Build(), new(ipAddress, (ushort)port!), logger);
     }
-}
-
-/// <summary>
-/// Inteface which represents a server platform module 
-/// Server platform encapsulate should encapsulate a tcp module 
-/// and a protocol handler 
-/// </summary>
-public interface IServerPlatform
-{
-    public Task StartAsync(CancellationToken cancellationToken);
-
-    public Task StopAsync(CancellationToken cancellationToken);
-
-    public Task RestartAsync(CancellationToken cancellationToken);
 }
 
 /// <summary>
