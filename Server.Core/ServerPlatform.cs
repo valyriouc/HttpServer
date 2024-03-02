@@ -34,11 +34,11 @@ internal class ServerPlatform<THandler> : IServerPlatform
     }
 
     public async Task StartAsync(CancellationToken cancellationToken) =>
-        await Server.StartAsync(cancellationToken);
+        await Server.RunAsync(cancellationToken);
 
-    public async Task StopAsync(CancellationToken cancellationToken) => 
-        await Server.StopAsync(cancellationToken);
+    public async Task StopAsync(CancellationToken cancellationToken) =>
+        throw new NotImplementedException();
 
-    public async Task RestartAsync(CancellationToken cancellationToken) => 
-        await Server.RestartAsync(cancellationToken);
+    public async Task RestartAsync(CancellationToken cancellationToken) =>
+        throw new NotImplementedException();
 }
