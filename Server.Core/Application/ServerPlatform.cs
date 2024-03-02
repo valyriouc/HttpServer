@@ -93,7 +93,10 @@ public class ServerPlatformBuilder<THandler> : IBuilder<IServerPlatform>
             throw new ArgumentException(nameof(logger));
         }
 
-        return new ServerPlatform<THandler>(protocolBuilder!.Build(), new(ipAddress, (ushort)port!), logger);
+        return new ServerPlatform<THandler>(
+            protocolBuilder!.Build(), 
+            new(ipAddress, (ushort)port!), 
+            logger);
     }
 }
 
