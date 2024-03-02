@@ -1,10 +1,9 @@
 ﻿using Server.Core.Http;
 using Server.Core.Logging;
-
 using System.Net;
 using System.Text;
 
-namespace Server.Core;
+namespace Server.Core.Protocol;
 
 internal class HttpParser
 {
@@ -12,7 +11,7 @@ internal class HttpParser
     {
         NotStarted,
         Method = 0,
-        Url = 1, 
+        Url = 1,
         Version = 2,
         Headers = 3,
         Body = 4,
@@ -20,7 +19,7 @@ internal class HttpParser
     }
 
     protected readonly ReadOnlyMemory<byte> data;
-                
+
     private readonly ILogger logger;
     private readonly HttpRequestBuilder builder;
 
@@ -30,8 +29,8 @@ internal class HttpParser
     public HttpParser(ReadOnlyMemory<byte> data, ILogger logger)
     {
         this.data = data;
-        this.ptr = 0;
-        this.state = ParsingState.NotStarted;
+        ptr = 0;
+        state = ParsingState.NotStarted;
         this.logger = logger;
 
         builder = new HttpRequestBuilder();
@@ -39,12 +38,12 @@ internal class HttpParser
 
     public HttpRequest? Parse()
     {
-        if (this.data.IsEmpty)
+        if (data.IsEmpty)
         {
             return null;
         }
 
-        if (this.state != ParsingState.NotStarted)
+        if (state != ParsingState.NotStarted)
         {
             throw new HttpParserException("Invalid parsing state!");
         }
@@ -54,7 +53,7 @@ internal class HttpParser
         ParseVersion();
         EnsureNewLine();
 
-        if (this.state != ParsingState.Version)
+        if (state != ParsingState.Version)
         {
             throw new HttpParserException("Invalid parser state!");
         }
@@ -62,19 +61,19 @@ internal class HttpParser
         do
         {
             ParseHeader();
-        } while (this.state == ParsingState.Headers);
+        } while (state == ParsingState.Headers);
 
-        if (this.state == ParsingState.Body)
+        if (state == ParsingState.Body)
         {
             ReadBody();
         }
-        
+
         return builder.Build();
-    } 
+    }
 
     private void EnsureSpace()
     {
-        if (this.data.Span[ptr] != 0x20)
+        if (data.Span[ptr] != 0x20)
         {
             throw new HttpParserException("Expected a space!");
         }
@@ -86,15 +85,15 @@ internal class HttpParser
 
     private void EnsureNewLine()
     {
-        if (this.data.Span[ptr] == (byte)'\r' && 
-            this.data.Span[ptr+1] == (byte)'\n')
+        if (data.Span[ptr] == (byte)'\r' &&
+            data.Span[ptr + 1] == (byte)'\n')
         {
             ptr += 2;
             return;
         }
 
-        if (this.data.Span[ptr] == (byte)'\n' || 
-            this.data.Span[ptr] == (byte)'\r')
+        if (data.Span[ptr] == (byte)'\n' ||
+            data.Span[ptr] == (byte)'\r')
         {
             ptr += 1;
             return;
@@ -105,7 +104,7 @@ internal class HttpParser
 
     protected internal void ParseMethod()
     {
-        switch(this.data.Span[0])
+        switch (data.Span[0])
         {
             case 0x47:
                 {
@@ -116,7 +115,7 @@ internal class HttpParser
                 break;
             case 0x50:
                 {
-                    if (this.data.Span[1] == 0x4f)
+                    if (data.Span[1] == 0x4f)
                     {
                         builder.WithMethod(HttpMethod.Post);
                         ptr += 4;
@@ -133,12 +132,12 @@ internal class HttpParser
                 break;
         }
 
-        this.state = ParsingState.Method;
+        state = ParsingState.Method;
     }
-    
+
     protected internal void ParseUrl()
     {
-        if (this.state != ParsingState.Method)
+        if (state != ParsingState.Method)
         {
             throw new HttpParserException("Invalid parser state!");
         }
@@ -147,7 +146,7 @@ internal class HttpParser
 
         logger.Warn(ptr.ToString());
 
-        ReadOnlySpan<byte> slice = this.data.Span.Slice(ptr);
+        ReadOnlySpan<byte> slice = data.Span.Slice(ptr);
 
         int index = slice.IndexOf((byte)0x20);
 
@@ -155,33 +154,33 @@ internal class HttpParser
 
         ptr += index;
 
-        this.state = ParsingState.Url;
+        state = ParsingState.Url;
     }
 
     protected internal void ParseVersion()
     {
-        if (this.state != ParsingState.Url)
+        if (state != ParsingState.Url)
         {
             throw new HttpParserException("Invalid parser state!");
         }
 
         EnsureSpace();
 
-        ReadOnlySpan<byte> slice = this.data.Span.Slice(ptr);
+        ReadOnlySpan<byte> slice = data.Span.Slice(ptr);
 
         int index = slice.IndexOf((byte)'\r') + 1;
 
         ReadOnlySpan<byte> line = slice[0..index];
 
-        if ((line.Length != 7 || 
-            line.Length != 9) && 
+        if ((line.Length != 7 ||
+            line.Length != 9) &&
             line[line.Length - 1] != (byte)'\r')
         {
             throw HttpException.InternalServerError(
                 "Malformed head line");
         }
 
-        this.state = ParsingState.Version;
+        state = ParsingState.Version;
 
         if (line.Length == 7)
         {
@@ -215,19 +214,19 @@ internal class HttpParser
 
     protected internal void ParseHeader()
     {
-        this.state = ParsingState.Headers;
+        state = ParsingState.Headers;
 
-        ReadOnlySpan<byte> slice = this.data.Span.Slice(ptr);
+        ReadOnlySpan<byte> slice = data.Span.Slice(ptr);
 
         if (slice.IsEmpty)
         {
-            this.state = ParsingState.Finished;
+            state = ParsingState.Finished;
             return;
         }
 
         if (slice[0] == (byte)'\r' && slice[1] == (byte)'\n')
         {
-            this.state = ParsingState.Body;
+            state = ParsingState.Body;
             return;
         }
 
@@ -237,7 +236,7 @@ internal class HttpParser
 
         EnsureSpace();
 
-        slice = this.data.Span.Slice(ptr);
+        slice = data.Span.Slice(ptr);
 
         int valueLength = slice.IndexOf((byte)'\r') + 1;
         string value = Encoding.UTF8.GetString(slice[0..valueLength]);
@@ -250,7 +249,7 @@ internal class HttpParser
 
     protected void ReadBody()
     {
-        ReadOnlySpan<byte> slice = this.data.Span.Slice(ptr);
+        ReadOnlySpan<byte> slice = data.Span.Slice(ptr);
         int firstNull = slice.IndexOf((byte)0x00);
         builder.WithBody(slice[..firstNull]);
     }

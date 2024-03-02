@@ -3,7 +3,7 @@
 namespace Server.Core.Protocol;
 
 /// <summary>
-/// Class which represents a module which is capabable of handling http 
+/// Class which represents a module that is capabable of handling http 
 /// </summary>
 public class HttpProtocolPlatform : IProtocolPlatform
 {
@@ -19,7 +19,7 @@ public class HttpProtocolPlatform : IProtocolPlatform
         RequestPipeline = new HashSet<Middleware>();
     }
 
-    public Task<Memory<byte>> HandleOperationAsync(Memory<byte> request)
+    public async Task<Memory<byte>> HandleOperationAsync(Memory<byte> request)
     {
         throw new NotImplementedException();
     }
