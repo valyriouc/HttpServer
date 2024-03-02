@@ -7,9 +7,9 @@ namespace Server.Core;
 /// <summary>
 /// Represents a basic server which waits for and handles network requests
 /// </summary>
-public interface IServerBackbone<THandler> : IServerPlatform
+public interface IServerBackbone<THandler> 
 {
-
+    public Task RunAsync(CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -20,12 +20,12 @@ public interface IServerBackbone<THandler> : IServerPlatform
 internal class ThreadServer<THandler> : IServerBackbone<THandler>, IDisposable
     where THandler : IProtocolPlatform
 {
+
     private readonly Socket listener;
     private readonly ILogger logger;
     private readonly ServerConfig config;
 
     private int requestCounter;
-    private bool isRunning = true;
 
     private readonly THandler handler;
 
@@ -40,7 +40,7 @@ internal class ThreadServer<THandler> : IServerBackbone<THandler>, IDisposable
         listener = new Socket(SocketType.Stream, ProtocolType.Tcp);
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public async Task RunAsync(CancellationToken cancellationToken)
     {
         List<Task> tasks = new List<Task>();
 
@@ -51,7 +51,7 @@ internal class ThreadServer<THandler> : IServerBackbone<THandler>, IDisposable
 
             logger.Info($"Listen on port {config.Port}!");
 
-            while (isRunning)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 Socket client = await listener.AcceptAsync(cancellationToken);
                 requestCounter += 1;
@@ -103,16 +103,6 @@ internal class ThreadServer<THandler> : IServerBackbone<THandler>, IDisposable
         {
             client.Close();
         }
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task RestartAsync(CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
     }
 
     public void Dispose()
