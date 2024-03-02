@@ -82,12 +82,6 @@ internal class ThreadServer<THandler> : IDisposable
             Memory<byte> response = await handler.HandleOperationAsync(request);
             logger.Info("Handled request successfully!");
 
-            if (response.IsEmpty)
-            {
-                logger.Warn("Response was empty!");
-                return;
-            }
-
             await stream.WriteAsync(response);
 
             stream.Flush();
