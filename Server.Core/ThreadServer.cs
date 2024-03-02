@@ -4,11 +4,11 @@ using System.Net.Sockets;
 namespace Server.Core;
 
 /// <summary>
-/// This is the implementation of a generic listener 
+/// This is the implementation of a generic server backbone 
 /// TODO: Implement a server base where different servers can be implemented 
 /// </summary>
 /// <typeparam name="THandler"></typeparam>
-internal class HttpServer<THandler> : IDisposable
+internal class ThreadServer<THandler> : IDisposable
     where THandler : IProtocolPlatform
 {
     private readonly Socket listener;
@@ -18,7 +18,7 @@ internal class HttpServer<THandler> : IDisposable
 
     private readonly THandler handler;
 
-    internal HttpServer(THandler app, ILogger serverLogger)
+    internal ThreadServer(THandler app, ILogger serverLogger)
     {
         requestCounter = 0;
 

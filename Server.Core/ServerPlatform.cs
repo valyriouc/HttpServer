@@ -22,14 +22,14 @@ internal class ServerPlatform<THandler> : IServerPlatform
     private readonly ILogger logger;
     private readonly ServerConfig serverConfig;
 
-    private HttpServer<THandler> Server { get; init; }
+    private ThreadServer<THandler> Server { get; init; }
 
     internal ServerPlatform(
         THandler handler,
         ServerConfig serverConfig,
         ILogger logger)
     {
-        Server = new HttpServer<THandler>(handler, logger);
+        Server = new ThreadServer<THandler>(handler, logger);
 
         this.serverConfig = serverConfig;
         this.logger = logger;
