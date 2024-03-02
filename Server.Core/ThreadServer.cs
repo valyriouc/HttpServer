@@ -5,7 +5,7 @@ using System.Net.Sockets;
 namespace Server.Core;
 
 /// <summary>
-/// Represents a basic server which waits and handles network requests
+/// Represents a basic server which waits for and handles network requests
 /// </summary>
 public interface IServerBackbone<THandler> : IServerPlatform
 {
