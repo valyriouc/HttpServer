@@ -3,6 +3,11 @@ using System.Net.Sockets;
 
 namespace Server.Core;
 
+/// <summary>
+/// This is the implementation of a generic listener 
+/// TODO: Implement a server base where different servers can be implemented 
+/// </summary>
+/// <typeparam name="THandler"></typeparam>
 internal class HttpServer<THandler> : IDisposable
     where THandler : IProtocolPlatform
 {
