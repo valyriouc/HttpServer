@@ -1,36 +1,46 @@
 ﻿using Server.Core.Logging;
+using Server.Generic;
 using System.Net.Sockets;
 
 namespace Server.Core;
+
+/// <summary>
+/// Represents a basic server which waits and handles network requests
+/// </summary>
+public interface IServerBackbone<THandler> : IServerPlatform
+{
+
+}
 
 /// <summary>
 /// This is the implementation of a generic server backbone 
 /// TODO: Implement a server base where different servers can be implemented 
 /// </summary>
 /// <typeparam name="THandler"></typeparam>
-internal class ThreadServer<THandler> : IDisposable
+internal class ThreadServer<THandler> : IServerBackbone<THandler>, IDisposable
     where THandler : IProtocolPlatform
 {
     private readonly Socket listener;
     private readonly ILogger logger;
+    private readonly ServerConfig config;
 
     private int requestCounter;
+    private bool isRunning = true;
 
     private readonly THandler handler;
 
-    internal ThreadServer(THandler app, ILogger serverLogger)
+    internal ThreadServer(THandler handler, ServerConfig config, ILogger logger)
     {
         requestCounter = 0;
 
-        logger = serverLogger;
-        handler = app;
+        this.logger = logger;
+        this.handler = handler;
+        this.config = config;
 
         listener = new Socket(SocketType.Stream, ProtocolType.Tcp);
     }
 
-    public async Task<int> RunAsync(
-        ServerConfig config, 
-        CancellationToken token)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
         List<Task> tasks = new List<Task>();
 
@@ -41,16 +51,16 @@ internal class ThreadServer<THandler> : IDisposable
 
             logger.Info($"Listen on port {config.Port}!");
 
-            while (true)
+            while (isRunning)
             {
-                Socket client = await listener.AcceptAsync(token);
+                Socket client = await listener.AcceptAsync(cancellationToken);
                 requestCounter += 1;
 
                 Task t = Task.Run(async () =>
                 {
                     using (client)
                     {
-                        await HandleRequestAsync(client, token);
+                        await HandleRequestAsync(client, cancellationToken);
                     }
                 });
 
@@ -59,16 +69,15 @@ internal class ThreadServer<THandler> : IDisposable
                 tasks.Add(t);
             }
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             logger.Error(ex);
-            return -1;
         }
         finally
         {
             await Task.WhenAll(tasks);
         }
-    } 
+    }
 
     private async Task HandleRequestAsync(Socket client, CancellationToken token)
     { 
@@ -94,6 +103,16 @@ internal class ThreadServer<THandler> : IDisposable
         {
             client.Close();
         }
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task RestartAsync(CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
     }
 
     public void Dispose()

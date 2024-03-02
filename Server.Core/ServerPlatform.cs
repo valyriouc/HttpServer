@@ -20,31 +20,25 @@ internal class ServerPlatform<THandler> : IServerPlatform
     where THandler : IProtocolPlatform
 {
     private readonly ILogger logger;
-    private readonly ServerConfig serverConfig;
 
-    private ThreadServer<THandler> Server { get; init; }
+    // TODO: Later this should be an abstract interface for all types of servers 
+    private IServerBackbone<THandler> Server { get; init; }
 
     internal ServerPlatform(
         THandler handler,
         ServerConfig serverConfig,
         ILogger logger)
     {
-        Server = new ThreadServer<THandler>(handler, logger);
-
-        this.serverConfig = serverConfig;
         this.logger = logger;
+        Server = new ThreadServer<THandler>(handler, serverConfig, logger);
     }
 
     public async Task StartAsync(CancellationToken cancellationToken) =>
-        await Server.RunAsync(serverConfig, cancellationToken);
+        await Server.StartAsync(cancellationToken);
 
-    public async Task StopAsync(CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task StopAsync(CancellationToken cancellationToken) => 
+        await Server.StopAsync(cancellationToken);
 
-    public async Task RestartAsync(CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task RestartAsync(CancellationToken cancellationToken) => 
+        await Server.RestartAsync(cancellationToken);
 }
