@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Server.Core.Protocol;
+﻿namespace Server.Core.Protocol;
 
 /// <summary>
 /// Configuration for the http protocol
@@ -21,5 +15,6 @@ public struct HttpProtocolConfigurations
     {
         Methods = new HashSet<string>();
         Versions = new HashSet<Version>();
+        AllowedHeaders = new Dictionary<string, string[]>();    
     }
 }
