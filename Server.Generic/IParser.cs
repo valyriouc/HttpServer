@@ -11,5 +11,9 @@ public interface IParser<TNode>
 {
     public ParserState State { get; set; }
 
+    public void Feed(ReadOnlyMemory<byte> payload);
+
     public IEnumerable<TNode> Parse();
+
+    public void Deconstruct();
 }

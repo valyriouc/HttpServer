@@ -7,20 +7,25 @@ namespace Server.Core.Protocol;
 
 internal class HttpParser : IParser<HttpNode>, ILoggeble
 {
-    protected readonly ReadOnlyMemory<byte> data;
+    protected ReadOnlyMemory<byte> data;
     private int ptr;
 
     public ILogger Logger { get; }
 
     public ParserState State { get; set; }
 
-    public HttpParser(ReadOnlyMemory<byte> data, ILogger logger)
+    public HttpParser(ILogger logger)
     {
-        this.data = data;
         ptr = 0;
         State = ParserState.NotStarted;
         Logger = logger;
     }
+
+    public void Feed(ReadOnlyMemory<byte> payload)
+    {
+        this.data = payload;
+    }
+
 
     public IEnumerable<HttpNode> Parse()
     {
@@ -217,5 +222,12 @@ internal class HttpParser : IParser<HttpNode>, ILoggeble
         ReadOnlySpan<byte> slice = data.Span.Slice(ptr);
         int firstNull = slice.IndexOf((byte)0x00);
         return new HttpNode(HttpPart.Body, slice[..firstNull].ToArray());
+    }
+
+    public void Deconstruct()
+    {
+        State = ParserState.NotStarted;
+        this.data = null;
+        ptr = 0;
     }
 }
