@@ -37,7 +37,6 @@ public class HttpProtocolPlatform : IProtocolPlatform
         {
             Parser.Feed(request);
             IEnumerable<HttpNode> nodes = Parser.Parse();
-            Parser.Deconstruct();
 
             HttpRequest req = BuildRequest(nodes);
 
@@ -46,6 +45,8 @@ public class HttpProtocolPlatform : IProtocolPlatform
             HttpResponse response = new HttpResponse();
 
             IResponse res = await endpoint.ExecuteAsync(req);
+
+            Parser.Deconstruct();
 
             await res.WriteToBodyAsync(response.Body);
 

@@ -96,6 +96,7 @@ internal class HttpParser : IParser<HttpNode>, ILoggeble
             case 0x47:
                 {
                     Logger.Info("Read get method!");
+                    ptr += 3;
                     return new HttpNode(HttpPart.Method, Encoding.UTF8.GetBytes("GET"));
                 }
             case 0x50:
@@ -103,6 +104,7 @@ internal class HttpParser : IParser<HttpNode>, ILoggeble
                     if (data.Span[1] == 0x4f)
                     {
                         Logger.Info("Read post method!");
+                        ptr += 4;
                         return new HttpNode(HttpPart.Method, Encoding.UTF8.GetBytes("POST"));
                     }
                     else

@@ -2,8 +2,6 @@
 using Server.Core.Logging;
 using Server.Generic;
 
-using System.Reflection.Metadata.Ecma335;
-
 namespace Server.Core.Protocol;
 
 public class HttpProtocolPlatformBuilder : IProtocolPlatformBuilder<HttpProtocolPlatform>
