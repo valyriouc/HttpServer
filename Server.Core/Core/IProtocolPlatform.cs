@@ -1,4 +1,4 @@
-﻿using Server.Core.Application.Core;
+﻿using Server.Generic;
 
 namespace Server.Core;
 public interface IProtocolPlatform
