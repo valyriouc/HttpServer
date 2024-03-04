@@ -1,50 +1,9 @@
-﻿using Server.Core.Http;
-using Server.Core.Logging;
-using System.Net;
+﻿using Server.Core.Logging;
+using Server.Generic;
+
 using System.Text;
 
 namespace Server.Core.Protocol;
-
-public enum ParserState
-{
-    NotStarted = 0,
-    Parsing = 1,
-    Finished = 3
-}
-
-public interface ILoggeble
-{
-    public ILogger Logger { get; }
-}
-
-public interface IParser<TNode>
-{
-    public ParserState State { get; set; }
-
-    public IEnumerable<TNode> Parse();
-}
-
-public enum HttpPart
-{
-    Method = 0,
-    Url = 1,
-    Version = 2,
-    Header = 3,
-    Body = 4
-}
-
-public struct HttpNode
-{
-    public HttpPart Part { get; }
-
-    public byte[] Content { get; }
-
-    public HttpNode(HttpPart part, byte[] content)
-    {
-        Part = part;
-        Content = content;
-    }
-}
 
 internal class HttpParser : IParser<HttpNode>, ILoggeble
 {
@@ -132,14 +91,14 @@ internal class HttpParser : IParser<HttpNode>, ILoggeble
             case 0x47:
                 {
                     Logger.Info("Read get method!");
-                    return new HttpNode(HttpPart.Method, "GET");
+                    return new HttpNode(HttpPart.Method, Encoding.UTF8.GetBytes("GET"));
                 }
             case 0x50:
                 {
                     if (data.Span[1] == 0x4f)
                     {
                         Logger.Info("Read post method!");
-                        return new HttpNode(HttpPart.Method, "POST");
+                        return new HttpNode(HttpPart.Method, Encoding.UTF8.GetBytes("POST"));
                     }
                     else
                     {
