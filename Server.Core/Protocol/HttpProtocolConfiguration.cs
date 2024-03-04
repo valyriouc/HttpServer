@@ -9,12 +9,12 @@ public struct HttpProtocolConfigurations
 
     public HashSet<Version> Versions { get; }
 
-    public Dictionary<string, string[]> AllowedHeaders { get; }
+    public Dictionary<string, HashSet<string>> ForbiddenHeaders { get; }
 
     public HttpProtocolConfigurations()
     {
         Methods = new HashSet<string>();
         Versions = new HashSet<Version>();
-        AllowedHeaders = new Dictionary<string, string[]>();    
+        ForbiddenHeaders = new Dictionary<string, HashSet<string>>();    
     }
 }

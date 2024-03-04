@@ -16,21 +16,20 @@ public delegate HttpResponse Middleware(HttpRequest request, Middleware next);
 /// Implementation of a server platform 
 /// </summary>
 /// <typeparam name="THandler"></typeparam>
-internal class ServerPlatform<THandler> : IServerPlatform
-    where THandler : IProtocolPlatform
+internal class ServerPlatform : IServerPlatform
 {
     private readonly ILogger logger;
 
     // TODO: Later this should be an abstract interface for all types of servers 
-    private IServerBackbone<THandler> Server { get; init; }
+    private IServerBackbone Server { get; init; }
 
     internal ServerPlatform(
-        THandler handler,
+        IProtocolPlatform protocol,
         ServerConfig serverConfig,
         ILogger logger)
     {
         this.logger = logger;
-        Server = new ThreadServer<THandler>(handler, serverConfig, logger);
+        Server = new ThreadServer(protocol, serverConfig, logger);
     }
 
     public async Task StartAsync(CancellationToken cancellationToken) =>

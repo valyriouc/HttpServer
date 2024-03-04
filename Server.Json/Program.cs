@@ -6,6 +6,9 @@ using Server.Core.Extensions;
 using Server.Core.Logging;
 using HttpServer.ServerConsole.Logging;
 using System.Text.Json;
+using Server.Core.Protocol;
+using Server.Generic;
+using System.Net;
 
 namespace Server.Json;
 
@@ -51,7 +54,7 @@ internal class PostEndpoint : IEndpoint
 
 internal class ServerApplication : IApplication
 {
-    public IEndpoint Create(HttpRequest request) => request.Path switch
+    public IEndpoint Create(HttpRequest request) => request.Url.AbsolutePath switch
     {
         "/" => new PostEndpoint(),
         _ => throw HttpException.NotFound(string.Empty)
@@ -66,12 +69,21 @@ internal static class Program
 
         ILogger logger = new LogOntoConsole(true);
 
-        HttpServer<ServerApplication> server = new HttpServer<ServerApplication>(app, logger);
+        var platform = new HttpServerPlatformBuilder()
+            .ConfigureProtocol(builder =>
+            {
+                builder
+                    .WithApplicaton(new ServerApplication())
+                    .WithVersion(HttpVersion.Version11)
+                    .WithMethod("GET")
+                    .WithMethod("POST");
+            })
+            .WithLogger(logger)
+            .WithAddress(IPAddress.Parse("127.0.0.1"))
+            .WithPort(8080)
+            .Build();
 
-        HttpServerConfig config = new HttpServerConfig("127.0.0.1", 3233);
-
-        CancellationTokenSource source = new CancellationTokenSource();
-
-        await server.RunAsync(config, source.Token);
+        CancellationTokenSource source = new();
+        await platform.StartAsync(source.Token);
     }
 }

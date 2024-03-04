@@ -8,10 +8,15 @@ internal readonly struct ServerConfig
 
     public ushort Port { get; }
 
-    public ServerConfig(string ipAddress, ushort port)
+    public ServerConfig(IPAddress ipAddress, ushort port)
     {
-        Address = IPAddress.Parse(ipAddress);
+        Address = ipAddress;
         Port = port;
+    }
+
+    public ServerConfig(string ipAddress, ushort port) : this(IPAddress.Parse(ipAddress), port)
+    {
+
     }
 
     public IPEndPoint CreateEndpoint() =>

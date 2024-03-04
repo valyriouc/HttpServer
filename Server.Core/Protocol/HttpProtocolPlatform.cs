@@ -1,5 +1,6 @@
 ﻿using Server.Core.Application.Core;
 using Server.Core.Http;
+using Server.Core.Logging;
 using Server.Generic;
 using System.Text;
 
@@ -8,41 +9,60 @@ namespace Server.Core.Protocol;
 /// <summary>
 /// Class which represents a module that is capabable of handling http 
 /// </summary>
-public class HttpProtocolPlatform<TParser> : IProtocolPlatform
-    where TParser : IParser<HttpNode>
+public class HttpProtocolPlatform : IProtocolPlatform
 {
+    public ILogger Logger { get; }
+
     public IApplication Application { get; }
 
-    public TParser Parser { get; }
-
-    public HashSet<Middleware> RequestPipeline { get; }
+    public IParser<HttpNode> Parser { get; }
 
     public HttpProtocolConfigurations Config { get; }
-    
-    public HttpProtocolPlatform(Func<TParser> getParserFunc, IApplication app)
+
+    public HttpProtocolPlatform(
+        HttpProtocolConfigurations config,
+        Func<IParser<HttpNode>> getParserFunc, 
+        IApplication app,
+        ILogger logger)
     {
+        Config = config;
         Application = app;
-        RequestPipeline = new HashSet<Middleware>();
         Parser = getParserFunc();
+        Logger = logger;
     }
 
     public async Task<Memory<byte>> HandleOperationAsync(Memory<byte> request)
     {
-        Parser.Feed(request);
-        IEnumerable<HttpNode> nodes = Parser.Parse();
-        Parser.Deconstruct();
+        try
+        {
+            Parser.Feed(request);
+            IEnumerable<HttpNode> nodes = Parser.Parse();
+            Parser.Deconstruct();
 
-        HttpRequest req = BuildRequest(nodes);
+            HttpRequest req = BuildRequest(nodes);
 
-        IEndpoint endpoint = Application.Create(req);
+            IEndpoint endpoint = Application.Create(req);
 
-        HttpResponse response = new HttpResponse();
+            HttpResponse response = new HttpResponse();
 
-        IResponse res = await endpoint.ExecuteAsync(req);
+            IResponse res = await endpoint.ExecuteAsync(req);
 
-        await res.WriteToBodyAsync(response.Body);
+            await res.WriteToBodyAsync(response.Body);
 
-        return await response.WriteHttpAsync(res.ContentType);
+            return await response.WriteHttpAsync(res.ContentType);
+        }
+        catch (HttpException ex)
+        {
+            Logger.Error(ex);   
+            HttpResponse res = HttpResponse.FromHttpException(ex);
+            return await res.WriteHttpAsync(Core.Application.HttpContentType.Text);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex);
+            HttpResponse res = HttpResponse.FromUnexpectedException(ex);
+            return await res.WriteHttpAsync(Core.Application.HttpContentType.Text);
+        }
     }
     private HttpRequest BuildRequest(IEnumerable<HttpNode> nodes)
     {
@@ -93,10 +113,15 @@ public class HttpProtocolPlatform<TParser> : IProtocolPlatform
             (string name, string value) = current.GetHeader();
 
             // Make this to restricted headers!
-            if (Config.AllowedHeaders.ContainsKey(name))
+            if (Config.ForbiddenHeaders.ContainsKey(name))
             {
                 throw HttpException.BadRequest(
                     "This header is not allowed by the server!");
+            }
+            if (Config.ForbiddenHeaders[name].Contains(value))
+            {
+                throw HttpException.BadRequest(
+                    $"Header value {value} is not allowed for header {name}!");
             }
             builder.WithHeader(name, value);
         }

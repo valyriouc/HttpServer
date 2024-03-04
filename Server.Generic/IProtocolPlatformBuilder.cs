@@ -1,14 +1,16 @@
-﻿namespace Server.Generic;
+﻿
+namespace Server.Generic;
 
 /// <summary>
 /// Interface that builds a platform which can handle a specific (network) protocol
 /// </summary>
 /// <typeparam name="TPlatform"></typeparam>
-public interface IProtocolPlatformBuilder<TPlatform> : IBuilder<TPlatform>
+public interface IProtocolPlatformBuilder<TProtocol> : IBuilder<TProtocol> 
+    where TProtocol : IProtocolPlatform
 {
-    public IProtocolPlatformBuilder<TPlatform> WithMethods(HashSet<string> methods);
+    public IProtocolPlatformBuilder<TProtocol> WithMethod(string method);
 
-    public IProtocolPlatformBuilder<TPlatform> WithVersions(HashSet<Version> versions);
+    public IProtocolPlatformBuilder<TProtocol> WithVersion(Version version);
 
-    public IProtocolPlatformBuilder<TPlatform> WithHeaders(Dictionary<string, string[]> headers);
+    public IProtocolPlatformBuilder<TProtocol> WithoutHeader(string name, HashSet<string> values);
 }

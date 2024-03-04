@@ -1,4 +1,6 @@
 ﻿using Server.Core.Logging;
+using Server.Generic;
+
 using System.Net.Sockets;
 
 namespace Server.Core;
@@ -6,7 +8,7 @@ namespace Server.Core;
 /// <summary>
 /// Represents a basic server which waits for and handles network requests
 /// </summary>
-public interface IServerBackbone<THandler> 
+public interface IServerBackbone
 {
     public Task RunAsync(CancellationToken cancellationToken);
 }
@@ -16,8 +18,7 @@ public interface IServerBackbone<THandler>
 /// TODO: Implement a server base where different servers can be implemented 
 /// </summary>
 /// <typeparam name="THandler"></typeparam>
-internal class ThreadServer<THandler> : IServerBackbone<THandler>, IDisposable
-    where THandler : IProtocolPlatform
+internal class ThreadServer : IServerBackbone, IDisposable
 {
 
     private readonly Socket listener;
@@ -26,9 +27,9 @@ internal class ThreadServer<THandler> : IServerBackbone<THandler>, IDisposable
 
     private int requestCounter;
 
-    private readonly THandler handler;
+    private readonly IProtocolPlatform handler;
 
-    internal ThreadServer(THandler handler, ServerConfig config, ILogger logger)
+    internal ThreadServer(IProtocolPlatform handler, ServerConfig config, ILogger logger)
     {
         requestCounter = 0;
 
