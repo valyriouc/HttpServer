@@ -3,7 +3,7 @@
 internal class HttpRequestBuilder
 {
     private HttpMethod? method;
-    private string? url;
+    private Uri? url;
     private Version? version;
 
     public Dictionary<string, string> headers;
@@ -21,7 +21,7 @@ internal class HttpRequestBuilder
         return this;
     }
 
-    public HttpRequestBuilder WithUrl(string url)
+    public HttpRequestBuilder WithUrl(Uri url)
     {
         this.url = url;
         return this;

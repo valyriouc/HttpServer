@@ -1,8 +1,6 @@
 ﻿using Server.Core.Application.Core;
+using Server.Core.Http;
 using Server.Generic;
-
-using System.Reflection.Metadata.Ecma335;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace Server.Core.Protocol;
@@ -13,7 +11,7 @@ namespace Server.Core.Protocol;
 public class HttpProtocolPlatform<TParser> : IProtocolPlatform
     where TParser : IParser<HttpNode>
 {
-    public Dictionary<string, IApplication> Applications { get; }
+    public IApplication Application { get; }
 
     public TParser Parser { get; }
 
@@ -21,9 +19,9 @@ public class HttpProtocolPlatform<TParser> : IProtocolPlatform
 
     public HttpProtocolConfigurations Config { get; }
     
-    public HttpProtocolPlatform(Func<TParser> getParserFunc)
+    public HttpProtocolPlatform(Func<TParser> getParserFunc, IApplication app)
     {
-        Applications = new Dictionary<string, IApplication>();
+        Application = app;
         RequestPipeline = new HashSet<Middleware>();
         Parser = getParserFunc();
     }
@@ -33,12 +31,84 @@ public class HttpProtocolPlatform<TParser> : IProtocolPlatform
         Parser.Feed(request);
         IEnumerable<HttpNode> nodes = Parser.Parse();
         Parser.Deconstruct();
-       
 
-        // Get response 
-        throw new NotImplementedException();
+        HttpRequest req = BuildRequest(nodes);
+
+        IEndpoint endpoint = Application.Create(req);
+
+        HttpResponse response = new HttpResponse();
+
+        IResponse res = await endpoint.ExecuteAsync(req);
+
+        await res.WriteToBodyAsync(response.Body);
+
+        return await response.WriteHttpAsync(res.ContentType);
     }
+    private HttpRequest BuildRequest(IEnumerable<HttpNode> nodes)
+    {
+        HttpRequestBuilder builder = new();
 
+        IEnumerator<HttpNode> enumerator = nodes.GetEnumerator();
+
+        enumerator.MoveNext();
+        HttpMethod method = enumerator.Current.GetMethod();
+
+        if (!Config.Methods.Contains(method.Method))
+        {
+            throw HttpException.MethodNotAllowed(
+                $"Method {method.Method} is not supported!");
+        }
+
+        builder.WithMethod(method);
+
+        enumerator.MoveNext();
+        Uri uri = enumerator.Current.GetUrl();
+
+        // TODO: Implement a check for allowed urls!
+        // Maybe a pattern matching system!
+        builder.WithUrl(uri);
+
+        enumerator.MoveNext();
+        Version version = enumerator.Current.GetVersion();
+        if (!Config.Versions.Contains(version))
+        {
+            throw HttpException.BadRequest(
+                $"Http version {version.Major}.{version.Minor} is not supported!");
+        }
+
+        builder.WithVersion(version);
+
+        HttpNode current = enumerator.Current;
+        bool hasBody = false;
+        while(enumerator.MoveNext())
+        {
+            current = enumerator.Current;
+
+            if (current.Part == HttpPart.Body)
+            {
+                hasBody = true;
+                break;
+            }
+
+            (string name, string value) = current.GetHeader();
+
+            // Make this to restricted headers!
+            if (Config.AllowedHeaders.ContainsKey(name))
+            {
+                throw HttpException.BadRequest(
+                    "This header is not allowed by the server!");
+            }
+            builder.WithHeader(name, value);
+        }
+
+        if (hasBody)
+        {
+            ReadOnlySpan<byte> body = current.GetBody();
+            builder.WithBody(body);
+        }
+
+        return builder.Build();
+    }
 }
 
 file static class HttpNodeExtensions
@@ -92,7 +162,7 @@ file static class HttpNodeExtensions
         return (parts[0].Trim(), parts[1].Trim());
     }
 
-    public static Stream GetBody(this HttpNode node)
+    public static ReadOnlySpan<byte> GetBody(this HttpNode node)
     {
         if (node.Part is not HttpPart.Body)
         {
@@ -100,6 +170,6 @@ file static class HttpNodeExtensions
         }
 
         byte[] bytes = node.Content;
-        return new MemoryStream(bytes);
+        return bytes;
     }
 }
