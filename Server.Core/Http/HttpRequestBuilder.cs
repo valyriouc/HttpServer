@@ -3,7 +3,7 @@
 internal class HttpRequestBuilder
 {
     private HttpMethod? method;
-    private Uri? url;
+    private string? url;
     private Version? version;
 
     public Dictionary<string, string> headers;
@@ -21,7 +21,7 @@ internal class HttpRequestBuilder
         return this;
     }
 
-    public HttpRequestBuilder WithUrl(Uri url)
+    public HttpRequestBuilder WithUrl(string url)
     {
         this.url = url;
         return this;
@@ -54,7 +54,7 @@ internal class HttpRequestBuilder
             throw new ArgumentException("Missing method!");
         }
 
-        if (url is null)
+        if (string.IsNullOrWhiteSpace(this.url))
         {
             throw new ArgumentException("Missing url!");
         }
@@ -63,7 +63,7 @@ internal class HttpRequestBuilder
 
         return new HttpRequest(
             method,
-            url,
+            new HttpResourceIdentifier(this.url),
             version,
             headers,
             this.body);

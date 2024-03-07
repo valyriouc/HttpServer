@@ -2,6 +2,8 @@
 using Server.Core.Http;
 using Server.Core.Logging;
 using Server.Generic;
+
+using System.Net;
 using System.Text;
 
 namespace Server.Core.Protocol;
@@ -9,7 +11,7 @@ namespace Server.Core.Protocol;
 /// <summary>
 /// Class which represents a module that is capabable of handling http 
 /// </summary>
-public class HttpProtocolPlatform : IProtocolPlatform
+public class HttpProtocolPlatform : IProtocolPlatform<HttpResponse>
 {
     public ILogger Logger { get; }
 
@@ -31,7 +33,7 @@ public class HttpProtocolPlatform : IProtocolPlatform
         Logger = logger;
     }
 
-    public async Task<Memory<byte>> HandleOperationAsync(Memory<byte> request)
+    public async Task<HttpResponse> HandleOperationAsync(Memory<byte> request)
     {
         try
         {
@@ -44,25 +46,24 @@ public class HttpProtocolPlatform : IProtocolPlatform
 
             HttpResponse response = new HttpResponse();
 
+            // THis should be called payload 
             IResponse res = await endpoint.ExecuteAsync(req);
 
             Parser.Deconstruct();
 
             await res.WriteToBodyAsync(response.Body);
 
-            return await response.WriteHttpAsync(res.ContentType);
+            return response;
         }
         catch (HttpException ex)
         {
             Logger.Error(ex);   
-            HttpResponse res = HttpResponse.FromHttpException(ex);
-            return await res.WriteHttpAsync(Core.Application.HttpContentType.Text);
+            return HttpResponse.FromHttpException(ex);
         }
         catch (Exception ex)
         {
             Logger.Error(ex);
-            HttpResponse res = HttpResponse.FromUnexpectedException(ex);
-            return await res.WriteHttpAsync(Core.Application.HttpContentType.Text);
+            return HttpResponse.FromUnexpectedException(ex);
         }
     }
     private HttpRequest BuildRequest(IEnumerable<HttpNode> nodes)
@@ -83,11 +84,11 @@ public class HttpProtocolPlatform : IProtocolPlatform
         builder.WithMethod(method);
 
         enumerator.MoveNext();
-        Uri uri = enumerator.Current.GetUrl();
+        string path = enumerator.Current.GetPath();
 
         // TODO: Implement a check for allowed urls!
         // Maybe a pattern matching system!
-        builder.WithUrl(uri);
+        builder.WithUrl(path);
 
         enumerator.MoveNext();
         Version version = enumerator.Current.GetVersion();
@@ -101,6 +102,7 @@ public class HttpProtocolPlatform : IProtocolPlatform
 
         HttpNode current = enumerator.Current;
         bool hasBody = false;
+
         while(enumerator.MoveNext())
         {
             current = enumerator.Current;
@@ -114,16 +116,22 @@ public class HttpProtocolPlatform : IProtocolPlatform
             (string name, string value) = current.GetHeader();
 
             // Make this to restricted headers!
-            if (Config.ForbiddenHeaders.ContainsKey(name))
+            bool contains = Config.ForbiddenHeaders.ContainsKey(name);
+            if (contains)
             {
                 throw HttpException.BadRequest(
                     "This header is not allowed by the server!");
             }
-            if (Config.ForbiddenHeaders[name].Contains(value))
+            
+            if (contains)
             {
-                throw HttpException.BadRequest(
-                    $"Header value {value} is not allowed for header {name}!");
+                if (Config.ForbiddenHeaders[name].Contains(value))
+                {
+                    throw HttpException.BadRequest(
+                        $"Header value {value} is not allowed for header {name}!");
+                }
             }
+
             builder.WithHeader(name, value);
         }
 
@@ -157,11 +165,30 @@ file static class HttpNodeExtensions
             throw new HttpParserException("Expected a http version node!");
         }
 
-        byte[] bytes = node.Content;    
-        return Version.Parse(Encoding.UTF8.GetString(bytes));
+        byte[] bytes = node.Content;
+
+        string version = Encoding.UTF8.GetString(bytes); 
+        
+        switch (version)
+        {
+            case "HTTP1.1":
+                return HttpVersion.Version11;
+                break;
+            case "HTTP1":
+                return HttpVersion.Version10;
+                break;
+            case "HTTP2":
+                return HttpVersion.Version20;
+                break;
+            case "HTTP3":
+                return HttpVersion.Version30;
+                break;
+            default:
+                throw new HttpParserException("Could not determine http version!");
+        }
     }
 
-    public static Uri GetUrl(this HttpNode node)
+    public static string GetPath(this HttpNode node)
     {
         if (node.Part is not HttpPart.Url)
         {
@@ -169,7 +196,8 @@ file static class HttpNodeExtensions
         }
 
         byte[] bytes = node.Content;
-        return new Uri(Encoding.UTF8.GetString(bytes));
+        // Uri can`t handle only a path with get parameters
+        return Encoding.UTF8.GetString(bytes);
     }
 
     public static (string, string) GetHeader(this HttpNode node)

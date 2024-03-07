@@ -54,7 +54,7 @@ internal class PostEndpoint : IEndpoint
 
 internal class ServerApplication : IApplication
 {
-    public IEndpoint Create(HttpRequest request) => request.Url.AbsolutePath switch
+    public IEndpoint Create(HttpRequest request) => request.Url.Path switch
     {
         "/" => new PostEndpoint(),
         _ => throw HttpException.NotFound(string.Empty)

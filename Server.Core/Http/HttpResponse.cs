@@ -1,19 +1,22 @@
 ﻿using Server.Core.Application;
 using Server.Core.Extensions;
+using Server.Generic;
 
 using System.Net;
 using System.Text;
 
 namespace Server.Core.Http;
 
-public class HttpResponse : IDisposable
+public class HttpResponse : IDisposable, IToBytesConvertable
 { 
     public HttpStatusCode StatusCode { get; set; }
+
+    public HttpContentType ContentType { get; set; }
 
     public HttpHeaderDictionary Headers { get; }
 
     public Version Version { get; } = HttpVersion.Version11;
-
+       
     public Stream Body { get; init; }
 
     public HttpResponse()
@@ -32,7 +35,7 @@ public class HttpResponse : IDisposable
         Body.Position = 0;
     }
 
-    internal async Task<Memory<byte>> WriteHttpAsync(HttpContentType type)
+    public async Task<Memory<byte>> ToBytesAsync()
     {
         List<byte> bytes = [.. Version.GetHttpVersionBytes()];
 
@@ -43,12 +46,12 @@ public class HttpResponse : IDisposable
             .ChainableAdd(StatusCode.GetNameBytes())
             .ChainableNewLineWriting();
 
-        Headers.Add("content-type", type.ToStringType());
+        Headers.Add("content-type", ContentType.ToStringType());
         Headers.Add("content-length", Body.Length.ToString());
 
         IEnumerable<byte> headers = Headers.ConvertTo();
         bytes.AddRange(headers);
-        
+
         if (Body.Length != 0)
         {
             Body.Position = 0;
@@ -64,7 +67,7 @@ public class HttpResponse : IDisposable
         return bytes.ToArray();
     }
 
-    internal static HttpResponse FromHttpException(HttpException ex)
+        public static HttpResponse FromHttpException(HttpException ex)
     {
         HttpResponse response = new(ex.StatusCode);
 
@@ -74,7 +77,7 @@ public class HttpResponse : IDisposable
         return response;
     }
 
-    internal static HttpResponse FromUnexpectedException(Exception ex)
+    public static HttpResponse FromUnexpectedException(Exception ex)
     {
         return FromHttpException(HttpException.InternalServerError(ex.Message, ex));
     }

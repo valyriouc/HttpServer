@@ -1,4 +1,5 @@
-﻿using Server.Core.Logging;
+﻿using Server.Core.Http;
+using Server.Core.Logging;
 using Server.Generic;
 
 using System.Net.Sockets;
@@ -88,9 +89,10 @@ internal class ThreadServer : IServerBackbone, IDisposable
             Memory<byte> request = await stream.PackIntoAsync(token);
             
             logger.Info("Handling request...");
-            Memory<byte> response = await handler.HandleOperationAsync(request);
+            IToBytesConvertable responseObj =  await handler.HandleOperationAsync<HttpResponse>(request);
             logger.Info("Handled request successfully!");
 
+            Memory<byte> response = await responseObj.ToBytesAsync();
             await stream.WriteAsync(response);
 
             stream.Flush();

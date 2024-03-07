@@ -1,6 +1,6 @@
 ﻿namespace Server.Generic;
 
-public interface IProtocolPlatform
+public interface IProtocolPlatform<TResponse> where TResponse : IToBytesConvertable
 {
-    public Task<Memory<byte>> HandleOperationAsync(Memory<byte> request);
+    public Task<TResponse> HandleOperationAsync(Memory<byte> request);
 }

@@ -1,21 +1,28 @@
-﻿namespace Server.Core.Http;
+﻿using System.Net;
+
+namespace Server.Core.Http;
 
 public class HttpRequest
 {
 
     public HttpMethod Method { get; init; }
 
-    public Uri Url { get; init; }   
-    
-    private Version? Version { get; init; }
+    public HttpResourceIdentifier Url { get; init; }
+
+    public Version? Version { get; init; } = HttpVersion.Version11;
 
     public HttpHeaderDictionary Headers { get; init; }
 
     public MemoryStream? Body { get; init; }
 
-    internal HttpRequest(
+    public HttpRequest()
+    {
+
+    }
+
+    public HttpRequest(
         HttpMethod method, 
-        Uri url, 
+        HttpResourceIdentifier url, 
         Version? version, 
         HttpHeaderDictionary headers, 
         MemoryStream? body) 
@@ -25,5 +32,44 @@ public class HttpRequest
         Version = version;
         this.Headers = headers;
         Body = body;
+    }
+}
+
+public struct HttpResourceIdentifier 
+{
+    public string Unformatted { get; init; }
+
+    public string Path { get; init; }
+
+    public IEnumerable<(string, string)> Query { get; }
+
+    public HttpResourceIdentifier(string unformattedPath)
+    {
+        Unformatted = unformattedPath;
+        string[] splitted = Unformatted.Split("?");
+
+        if (splitted.Length < 1 || splitted.Length > 2)
+            throw new Exception("Invalid http path!");
+
+        Query = new List<(string, string)>();
+
+        if (splitted.Length == 2)
+        {
+            Query = ParseQueryString(splitted[1]);
+        }
+    }
+        
+    public static IEnumerable<(string, string)> ParseQueryString(string query)
+    { 
+        foreach (string param in query.Split("&"))
+        {
+            if (param.Count(x => x == '=') != 1)
+            {
+                continue;
+            }
+
+            string[] splitted = param.Split("=");
+            yield return (splitted[0], splitted[1]);
+        }
     }
 }

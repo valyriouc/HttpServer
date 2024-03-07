@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Server.Core.Protocol;
 
-internal class HttpParser : IParser<HttpNode>, ILoggeble
+public class HttpParser : IParser<HttpNode>, ILoggeble
 {
     protected ReadOnlyMemory<byte> data;
     private int ptr;
@@ -31,7 +31,7 @@ internal class HttpParser : IParser<HttpNode>, ILoggeble
     {
         if (data.IsEmpty)
         {
-            throw new HttpParserException("Invalid parser data!");
+            yield break;
         }
 
         if (State != ParserState.NotStarted)
@@ -109,11 +109,11 @@ internal class HttpParser : IParser<HttpNode>, ILoggeble
                     }
                     else
                     {
-                        throw new NotImplementedException("Http method is not supported!");
+                        throw new HttpParserException("Http method is not supported!");
                     }
                 }
             default:
-                throw new NotImplementedException("Http method is not supported!");
+                throw new HttpParserException("Http method is not supported!");
         }
     }
 
