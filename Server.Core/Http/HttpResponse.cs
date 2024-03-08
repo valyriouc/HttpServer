@@ -6,7 +6,12 @@ using System.Text;
 
 namespace Server.Core.Http;
 
-public class HttpResponse : IDisposable, IToBytesConvertable
+public interface IToParsingInput
+{
+    public abstract Task<IEnumerable<ParserNode>> TransformToAsync(CancellationToken token);
+}
+
+public class HttpResponse : IDisposable, IToParsingInput
 { 
     public HttpStatusCode StatusCode { get; set; }
 
@@ -74,15 +79,15 @@ public class HttpResponse : IDisposable, IToBytesConvertable
         return response;
     }
 
-    public static HttpResponse FromUnexpectedException(Exception ex)
-    {
-        return FromHttpException(HttpException.InternalServerError(ex.Message, ex));
-    }
-
     public void Dispose()
     {
         Body.Dispose();
         GC.SuppressFinalize(this);
+    }
+
+    public Task<IEnumerable<ParserNode>> TransformToAsync(CancellationToken token)
+    {
+        throw new NotImplementedException();
     }
 }
 
