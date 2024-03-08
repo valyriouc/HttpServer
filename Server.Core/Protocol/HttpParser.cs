@@ -40,16 +40,25 @@ public class HttpParser : IParser
         State = ParserState.Parsing;
 
         yield return ParseMethod();
+        yield return new ParserNode(Array.Empty<byte>());
+
+        EnsureSpace();
+
         yield return ParseUrl();
+        yield return new ParserNode(Array.Empty<byte>());
+
+        EnsureSpace();
+
         yield return ParseVersion();
-        
+        yield return new ParserNode(Array.Empty<byte>());
+
         EnsureNewLine();
 
         foreach (ParserNode header in ParseHeaders())
         {
             yield return header;
         }
-
+        
         if (State == ParserState.Parsing)
         {
             yield return ReadBody();
@@ -89,30 +98,9 @@ public class HttpParser : IParser
 
     protected ParserNode ParseMethod()
     {
-        switch (data.Span[0])
-        {
-            case 0x47:
-                {
-                    Logger.Info("Read get method!");
-                    ptr += 3;
-                    return new ParserNode(Encoding.UTF8.GetBytes("GET"));
-                }
-            case 0x50:
-                {
-                    if (data.Span[1] == 0x4f)
-                    {
-                        Logger.Info("Read post method!");
-                        ptr += 4;
-                        return new ParserNode(Encoding.UTF8.GetBytes("POST"));
-                    }
-                    else
-                    {
-                        throw new HttpParserException("Http method is not supported!");
-                    }
-                }
-            default:
-                throw new HttpParserException("Http method is not supported!");
-        }
+        int index = data.Span.IndexOf((byte)0x20);
+        ptr += index;
+        return new ParserNode(data.Span[ptr..index].ToArray());
     }
 
     protected ParserNode ParseUrl()
@@ -121,8 +109,6 @@ public class HttpParser : IParser
         {
             throw new HttpParserException("Invalid parser state!");
         }
-
-        EnsureSpace();
 
         ReadOnlySpan<byte> slice = data.Span.Slice(ptr);
 
@@ -140,8 +126,6 @@ public class HttpParser : IParser
         {
             throw new HttpParserException("Invalid parser state!");
         }
-
-        EnsureSpace();
 
         ReadOnlySpan<byte> slice = data.Span.Slice(ptr);
 
