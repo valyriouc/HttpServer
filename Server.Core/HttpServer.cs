@@ -1,42 +1,12 @@
 ﻿using Server.Core.Http;
 using Server.Core.Protocol;
-using Server.Generic;
+using Server.Http.Protocol;
 using Vectorize.Logging;
-using Vectorize.Server;
 using Vectorize.Server.Handles;
+using Vectorize.Server.Protocol;
+using Vectorize.Server.Server;
 
 namespace Server.Http;
-
-internal interface IProtocolPlatform<TRequest, TResponse>
-    where TRequest : IFromParsing<TRequest>
-    where TResponse : IToParsingInput
-{
-    public Task<TResponse> HandleRequestAsync(TRequest request, CancellationToken token);
-}
-
-internal class HttpPlatform : IProtocolPlatform<HttpRequest, HttpResponse>
-{
-    public Task<HttpResponse> HandleRequestAsync(HttpRequest request, CancellationToken token)
-    {
-        throw new NotImplementedException();
-    }
-}
-
-internal class HttpGenerator : ILoggable
-{
-    public ILogger Logger { get; }
-
-    public HttpGenerator(ILogger logger)
-    {
-        Logger = logger;
-    }
-
-    public ReadOnlyMemory<byte> Generate(IEnumerable<ParserNode> input)
-    {
-
-        return Array.Empty<byte>();
-    }
-}
 
 internal class HttpServer : IServerConsumer
 {
