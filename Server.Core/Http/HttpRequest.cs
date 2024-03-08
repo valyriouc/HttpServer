@@ -1,8 +1,14 @@
-﻿using System.Net;
+﻿using Server.Generic;
+using System.Net;
 
 namespace Server.Core.Http;
 
-public class HttpRequest
+public interface IFromParsing<T>
+{
+    public abstract static Task<T> GetFromParsingAsync(IEnumerable<ParserNode> nodes, CancellationToken token);
+}
+
+public class HttpRequest : IFromParsing<HttpRequest>
 {
 
     public HttpMethod Method { get; init; }
@@ -32,6 +38,11 @@ public class HttpRequest
         Version = version;
         this.Headers = headers;
         Body = body;
+    }
+
+    public static Task<HttpRequest> GetFromParsingAsync(IEnumerable<ParserNode> nodes, CancellationToken token)
+    {
+        throw new NotImplementedException();
     }
 }
 
