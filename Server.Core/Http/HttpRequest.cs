@@ -1,12 +1,8 @@
-﻿using Server.Generic;
-using System.Net;
+﻿using System.Net;
+using Vectorize.Server;
+using Vectorize.Server.Protocol;
 
 namespace Server.Core.Http;
-
-public interface IFromParsing<T>
-{
-    public abstract static Task<T> GetFromParsingAsync(IEnumerable<ParserNode> nodes, CancellationToken token);
-}
 
 public class HttpRequest : IFromParsing<HttpRequest>
 {

@@ -1,6 +1,6 @@
-﻿using Server.Generic;
-using System.Text;
+﻿using System.Text;
 using Vectorize.Logging;
+using Vectorize.Server.Protocol;
 
 namespace Server.Core.Protocol;
 

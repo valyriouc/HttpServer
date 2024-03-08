@@ -1,15 +1,10 @@
 ﻿using Server.Core.Extensions;
-using Server.Generic;
-
 using System.Net;
 using System.Text;
+using Vectorize.Server;
+using Vectorize.Server.Protocol;
 
 namespace Server.Core.Http;
-
-public interface IToParsingInput
-{
-    public abstract Task<IEnumerable<ParserNode>> TransformToAsync(CancellationToken token);
-}
 
 public class HttpResponse : IDisposable, IToParsingInput
 { 
@@ -84,6 +79,7 @@ public class HttpResponse : IDisposable, IToParsingInput
         Body.Dispose();
         GC.SuppressFinalize(this);
     }
+
 
     public Task<IEnumerable<ParserNode>> TransformToAsync(CancellationToken token)
     {

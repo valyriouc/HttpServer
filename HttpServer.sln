@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Server.Http", "Server.Core\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HttpServer.UnitTests", "HttpServer.UnitTests\HttpServer.UnitTests.csproj", "{DC1057BB-057A-49EB-A030-D1A4020CAF95}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Server.Generic", "Server.Generic\Server.Generic.csproj", "{A570CB81-5859-401E-9AFB-20D1F47B6EA3}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,10 +21,6 @@ Global
 		{DC1057BB-057A-49EB-A030-D1A4020CAF95}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DC1057BB-057A-49EB-A030-D1A4020CAF95}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DC1057BB-057A-49EB-A030-D1A4020CAF95}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A570CB81-5859-401E-9AFB-20D1F47B6EA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A570CB81-5859-401E-9AFB-20D1F47B6EA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A570CB81-5859-401E-9AFB-20D1F47B6EA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A570CB81-5859-401E-9AFB-20D1F47B6EA3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
