@@ -64,16 +64,6 @@ public class HttpResponse : IDisposable, IToParsingInput
         return bytes.ToArray();
     }
 
-        public static HttpResponse FromHttpException(HttpException ex)
-    {
-        HttpResponse response = new(ex.StatusCode);
-
-        response.Body.Write(Encoding.UTF8.GetBytes(ex.Message));
-        response.Body.Flush();
-
-        return response;
-    }
-
     public void Dispose()
     {
         Body.Dispose();
@@ -93,7 +83,7 @@ internal static class HttpHeaderDictionaryExtensions
     {
         foreach (KeyValuePair<string, string> pair in headers)
         {
-            foreach (byte b in Encoding.UTF8.GetBytes($"{pair.Key}: {pair.Value}\n"))
+            foreach (byte b in Encoding.UTF8.GetBytes($"{pair.Key}: {pair.Value}\r\n"))
             {
                 yield return b;
             }

@@ -59,7 +59,7 @@ internal class HttpRequestBuilder
             throw new ArgumentException("Missing url!");
         }
 
-        HttpHeaderDictionary headers = new HttpHeaderDictionary(this.headers);
+        HttpHeaders headers = new HttpHeaders(this.headers);
 
         return new HttpRequest(
             method,
