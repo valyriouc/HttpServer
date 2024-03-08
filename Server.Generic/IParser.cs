@@ -7,13 +7,25 @@ public enum ParserState
     Finished = 3
 }
 
-public interface IParser<TNode>
+public struct ParserNode
+{
+    public bool IsEmpty => Content.Length == 0;
+
+    public byte[] Content { get; }
+
+    public ParserNode(byte[] content)
+    {
+        Content = content;
+    }
+}
+
+public interface IParser
 {
     public ParserState State { get; set; }
 
     public void Feed(ReadOnlyMemory<byte> payload);
 
-    public IEnumerable<TNode> Parse();
+    public IEnumerable<ParserNode> Parse();
 
     public void Deconstruct();
 }

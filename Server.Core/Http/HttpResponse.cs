@@ -1,5 +1,4 @@
-﻿using Server.Core.Application;
-using Server.Core.Extensions;
+﻿using Server.Core.Extensions;
 using Server.Generic;
 
 using System.Net;
@@ -10,8 +9,6 @@ namespace Server.Core.Http;
 public class HttpResponse : IDisposable, IToBytesConvertable
 { 
     public HttpStatusCode StatusCode { get; set; }
-
-    public HttpContentType ContentType { get; set; }
 
     public HttpHeaderDictionary Headers { get; }
 

@@ -1,36 +1,25 @@
-﻿using Server.Core.Http;
-using Server.Core.Logging;
-using Server.Generic;
-
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
+using Vectorize.Core;
+using Vectorize.Logging;
+using Vectorize.Server;
 
 namespace Server.Core;
 
 /// <summary>
-/// Represents a basic server which waits for and handles network requests
-/// </summary>
-public interface IServerBackbone
-{
-    public Task RunAsync(CancellationToken cancellationToken);
-}
-
-/// <summary>
 /// This is the implementation of a generic server backbone 
-/// TODO: Implement a server base where different servers can be implemented 
 /// </summary>
 /// <typeparam name="THandler"></typeparam>
 internal class ThreadServer : IServerBackbone, IDisposable
 {
-
     private readonly Socket listener;
     private readonly ILogger logger;
     private readonly ServerConfig config;
 
     private int requestCounter;
 
-    private readonly IProtocolPlatform handler;
+    private readonly IStreamable handler;
 
-    internal ThreadServer(IProtocolPlatform handler, ServerConfig config, ILogger logger)
+    public ThreadServer(IStreamable handler, ServerConfig config, ILogger logger)
     {
         requestCounter = 0;
 
@@ -86,14 +75,12 @@ internal class ThreadServer : IServerBackbone, IDisposable
         {
             NetworkStream stream = new NetworkStream(client);
 
-            Memory<byte> request = await stream.PackIntoAsync(token);
-            
-            logger.Info("Handling request...");
-            IToBytesConvertable responseObj =  await handler.HandleOperationAsync<HttpResponse>(request);
-            logger.Info("Handled request successfully!");
-
-            Memory<byte> response = await responseObj.ToBytesAsync();
-            await stream.WriteAsync(response);
+            Stream output = await await stream
+                .PackIntoAsync(token)
+                .ContinueWith(async x => {
+                    Stream res = await handler.StreamThisAsync(x.Result, token);
+                    return res;
+                   }, token);
 
             stream.Flush();
         }
@@ -117,7 +104,7 @@ internal class ThreadServer : IServerBackbone, IDisposable
 file static class StreamExtensions
 {
     public static async Task<Memory<byte>> PackIntoAsync(
-        this NetworkStream stream, 
+        this NetworkStream stream,
         CancellationToken token)
     {
         List<byte> bytes = new List<byte>();

@@ -3,17 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Server.Core", "Server.Core\Server.Core.csproj", "{266CCF09-E499-47D5-89C1-9E876DED42C2}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Server.Testing", "Server.Testing\Server.Testing.csproj", "{A9B0B245-EC39-467D-81D5-C5B4506A2AB2}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Server.Static", "Server.Static\Server.Static.csproj", "{5FB10F59-7761-4AA1-BDD7-428BD65954F9}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Server.Json", "Server.Json\Server.Json.csproj", "{5DEF9FE8-4CA0-4971-A165-24CD285A5F2E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Server.Http", "Server.Core\Server.Http.csproj", "{266CCF09-E499-47D5-89C1-9E876DED42C2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HttpServer.UnitTests", "HttpServer.UnitTests\HttpServer.UnitTests.csproj", "{DC1057BB-057A-49EB-A030-D1A4020CAF95}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server.Generic", "Server.Generic\Server.Generic.csproj", "{A570CB81-5859-401E-9AFB-20D1F47B6EA3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Server.Generic", "Server.Generic\Server.Generic.csproj", "{A570CB81-5859-401E-9AFB-20D1F47B6EA3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,18 +19,6 @@ Global
 		{266CCF09-E499-47D5-89C1-9E876DED42C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{266CCF09-E499-47D5-89C1-9E876DED42C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{266CCF09-E499-47D5-89C1-9E876DED42C2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A9B0B245-EC39-467D-81D5-C5B4506A2AB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A9B0B245-EC39-467D-81D5-C5B4506A2AB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A9B0B245-EC39-467D-81D5-C5B4506A2AB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A9B0B245-EC39-467D-81D5-C5B4506A2AB2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5FB10F59-7761-4AA1-BDD7-428BD65954F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5FB10F59-7761-4AA1-BDD7-428BD65954F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5FB10F59-7761-4AA1-BDD7-428BD65954F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5FB10F59-7761-4AA1-BDD7-428BD65954F9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5DEF9FE8-4CA0-4971-A165-24CD285A5F2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5DEF9FE8-4CA0-4971-A165-24CD285A5F2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5DEF9FE8-4CA0-4971-A165-24CD285A5F2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5DEF9FE8-4CA0-4971-A165-24CD285A5F2E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DC1057BB-057A-49EB-A030-D1A4020CAF95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DC1057BB-057A-49EB-A030-D1A4020CAF95}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DC1057BB-057A-49EB-A030-D1A4020CAF95}.Release|Any CPU.ActiveCfg = Release|Any CPU

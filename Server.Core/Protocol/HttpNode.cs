@@ -9,15 +9,3 @@ public enum HttpPart
     Body = 4
 }
 
-public struct HttpNode
-{
-    public HttpPart Part { get; }
-
-    public byte[] Content { get; }
-
-    public HttpNode(HttpPart part, byte[] content)
-    {
-        Part = part;
-        Content = content;
-    }
-}

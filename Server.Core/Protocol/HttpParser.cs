@@ -1,11 +1,10 @@
-﻿using Server.Core.Logging;
-using Server.Generic;
-
+﻿using Server.Generic;
 using System.Text;
+using Vectorize.Logging;
 
 namespace Server.Core.Protocol;
 
-public class HttpParser : IParser<HttpNode>, ILoggeble
+public class HttpParser : IParser
 {
     protected ReadOnlyMemory<byte> data;
     private int ptr;
@@ -26,8 +25,7 @@ public class HttpParser : IParser<HttpNode>, ILoggeble
         this.data = payload;
     }
 
-
-    public IEnumerable<HttpNode> Parse()
+    public IEnumerable<ParserNode> Parse()
     {
         if (data.IsEmpty)
         {
@@ -47,7 +45,7 @@ public class HttpParser : IParser<HttpNode>, ILoggeble
         
         EnsureNewLine();
 
-        foreach (HttpNode header in ParseHeaders())
+        foreach (ParserNode header in ParseHeaders())
         {
             yield return header;
         }
@@ -89,7 +87,7 @@ public class HttpParser : IParser<HttpNode>, ILoggeble
         throw new HttpParserException("Expected a new line!");
     }
 
-    protected HttpNode ParseMethod()
+    protected ParserNode ParseMethod()
     {
         switch (data.Span[0])
         {
@@ -97,7 +95,7 @@ public class HttpParser : IParser<HttpNode>, ILoggeble
                 {
                     Logger.Info("Read get method!");
                     ptr += 3;
-                    return new HttpNode(HttpPart.Method, Encoding.UTF8.GetBytes("GET"));
+                    return new ParserNode(Encoding.UTF8.GetBytes("GET"));
                 }
             case 0x50:
                 {
@@ -105,7 +103,7 @@ public class HttpParser : IParser<HttpNode>, ILoggeble
                     {
                         Logger.Info("Read post method!");
                         ptr += 4;
-                        return new HttpNode(HttpPart.Method, Encoding.UTF8.GetBytes("POST"));
+                        return new ParserNode(Encoding.UTF8.GetBytes("POST"));
                     }
                     else
                     {
@@ -117,7 +115,7 @@ public class HttpParser : IParser<HttpNode>, ILoggeble
         }
     }
 
-    protected HttpNode ParseUrl()
+    protected ParserNode ParseUrl()
     {
         if (State != ParserState.Parsing)
         {
@@ -132,12 +130,11 @@ public class HttpParser : IParser<HttpNode>, ILoggeble
 
         ptr += index;
 
-        return new HttpNode(
-            HttpPart.Url, 
+        return new ParserNode( 
             slice[0..index].ToArray());
     }
 
-    protected HttpNode ParseVersion()
+    protected ParserNode ParseVersion()
     {
         if (State != ParserState.Parsing)
         {
@@ -166,28 +163,28 @@ public class HttpParser : IParser<HttpNode>, ILoggeble
 
             if (line[5] == 0x31)
             {
-                return new HttpNode(HttpPart.Version, Encoding.UTF8.GetBytes("HTTP1"));
+                return new ParserNode(Encoding.UTF8.GetBytes("HTTP1"));
             }
             if (line[5] == 0x32)
             {
-                return new HttpNode(HttpPart.Version, Encoding.UTF8.GetBytes("HTTP2"));
+                return new ParserNode(Encoding.UTF8.GetBytes("HTTP2"));
             }
             if (line[5] == 0x33)
             {
-                return new HttpNode(HttpPart.Version, Encoding.UTF8.GetBytes("HTTP3"));
+                return new ParserNode(Encoding.UTF8.GetBytes("HTTP3"));
             }
         }
 
         if (line.Length == 9)
         {
             ptr += line.Length - 1;
-            return new HttpNode(HttpPart.Version, Encoding.UTF8.GetBytes("HTTP1.1"));
+            return new ParserNode(Encoding.UTF8.GetBytes("HTTP1.1"));
         }
 
         throw HttpException.InternalServerError("Error when parsing the http version!");
     }
 
-    protected IEnumerable<HttpNode> ParseHeaders()
+    protected IEnumerable<ParserNode> ParseHeaders()
     {
         if (State != ParserState.Parsing)
         {
@@ -207,6 +204,7 @@ public class HttpParser : IParser<HttpNode>, ILoggeble
 
             if (slice[0] == (byte)'\r' && slice[1] == (byte)'\n')
             {
+                yield return new ParserNode(Array.Empty<byte>());
                 break;
             }
 
@@ -215,15 +213,15 @@ public class HttpParser : IParser<HttpNode>, ILoggeble
 
             EnsureNewLine();
 
-            yield return new HttpNode(HttpPart.Header, slice[0..length].ToArray());
+            yield return new ParserNode(slice[0..length].ToArray());
         }
     }
 
-    protected HttpNode ReadBody()
+    protected ParserNode ReadBody()
     {
         ReadOnlySpan<byte> slice = data.Span.Slice(ptr);
         int firstNull = slice.IndexOf((byte)0x00);
-        return new HttpNode(HttpPart.Body, slice[..firstNull].ToArray());
+        return new ParserNode(slice[..firstNull].ToArray());
     }
 
     public void Deconstruct()
