@@ -10,7 +10,7 @@ public class HttpResponse : IDisposable, IToParsingInput
 { 
     public HttpStatusCode StatusCode { get; set; }
 
-    public HttpHeaderDictionary Headers { get; }
+    public HttpHeaders Headers { get; }
 
     public Version Version { get; } = HttpVersion.Version11;
        
@@ -19,7 +19,7 @@ public class HttpResponse : IDisposable, IToParsingInput
     public HttpResponse()
     {
         StatusCode = HttpStatusCode.OK;
-        Headers = new HttpHeaderDictionary();
+        Headers = new HttpHeaders();
         Body = new MemoryStream();
         Body.Position = 0;
     }
@@ -27,7 +27,7 @@ public class HttpResponse : IDisposable, IToParsingInput
     private HttpResponse(HttpStatusCode statusCode)
     {
         StatusCode = statusCode;
-        Headers = new HttpHeaderDictionary();
+        Headers = new HttpHeaders();
         Body = new MemoryStream();
         Body.Position = 0;
     }
@@ -79,7 +79,7 @@ public class HttpResponse : IDisposable, IToParsingInput
 
 internal static class HttpHeaderDictionaryExtensions
 {
-    public static IEnumerable<byte> ConvertTo(this HttpHeaderDictionary headers)
+    public static IEnumerable<byte> ConvertTo(this HttpHeaders headers)
     {
         foreach (KeyValuePair<string, string> pair in headers)
         {
