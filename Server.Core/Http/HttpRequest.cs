@@ -13,7 +13,7 @@ public class HttpRequest : IFromParsing<HttpRequest>
 
     public Version? Version { get; init; } = HttpVersion.Version11;
 
-    public HttpHeaderDictionary Headers { get; init; }
+    public HttpHeaders Headers { get; init; }
 
     public MemoryStream? Body { get; init; }
 
@@ -26,7 +26,7 @@ public class HttpRequest : IFromParsing<HttpRequest>
         HttpMethod method, 
         HttpResourceIdentifier url, 
         Version? version, 
-        HttpHeaderDictionary headers, 
+        HttpHeaders headers, 
         MemoryStream? body) 
     {
         this.Method = method;
