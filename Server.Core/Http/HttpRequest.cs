@@ -1,4 +1,4 @@
-﻿using System.Net;
+﻿using Server.Http.Http.Version;
 using Vectorize.Server;
 using Vectorize.Server.Protocol;
 
@@ -11,7 +11,7 @@ public class HttpRequest : IFromParsing<HttpRequest>
 
     public HttpResourceIdentifier Url { get; init; }
 
-    public Version? Version { get; init; } = HttpVersion.Version11;
+    public HttpVersion Version { get; init; }
 
     public HttpHeaderDictionary Headers { get; init; }
 
@@ -25,7 +25,7 @@ public class HttpRequest : IFromParsing<HttpRequest>
     public HttpRequest(
         HttpMethod method, 
         HttpResourceIdentifier url, 
-        Version? version, 
+        HttpVersion version, 
         HttpHeaderDictionary headers, 
         MemoryStream? body) 
     {
