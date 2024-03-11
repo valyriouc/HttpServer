@@ -4,6 +4,9 @@ using Vectorize.Server.Protocol;
 
 namespace Server.Core.Protocol;
 
+/// <summary>
+/// A simple http parser capable parsing HTTP1.0 and higher
+/// </summary>
 public class HttpParser : IParser
 {
     protected ReadOnlyMemory<byte> data;
