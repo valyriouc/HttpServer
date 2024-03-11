@@ -1,11 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
   <ItemGroup>
     <Reference Include="Vectorize.Core">
       <HintPath>..\..\Vectorize.Common\Vectorize.Core\bin\Debug\net8.0\Vectorize.Core.dll</HintPath>
@@ -17,5 +15,7 @@
       <HintPath>..\..\Vectorize.Common\Vectorize.Server\bin\Debug\net8.0\Vectorize.Server.dll</HintPath>
     </Reference>
   </ItemGroup>
-
+  <ItemGroup>
+    <Folder Include="Http\ConfigValidation\" />
+  </ItemGroup>
 </Project>
